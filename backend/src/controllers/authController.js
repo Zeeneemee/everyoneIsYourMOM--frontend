@@ -97,13 +97,14 @@ export const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Create user in Convex
-    const userId = await convexClient.mutation('users:create', {
-      email,
-      fullName: fullName || null,
-      block: block || null,
-      unit: unit || null,
-      phoneNumber: phoneNumber || null,
-    });
+    // Build args object, only including defined fields
+    const createArgs = { email };
+    if (fullName) createArgs.fullName = fullName;
+    if (block) createArgs.block = block;
+    if (unit) createArgs.unit = unit;
+    if (phoneNumber) createArgs.phoneNumber = phoneNumber;
+    
+    const userId = await convexClient.mutation('users:create', createArgs);
 
     // Note: In a production app, you'd store the hashed password in a separate secure table
     // For now, we'll store it in a simple way (this is for demo purposes)
@@ -129,6 +130,7 @@ export const register = async (req, res) => {
           unit: user.unit,
           phoneNumber: user.phoneNumber,
           momPoints: user.momPoints,
+          onboardingCompleted: user.onboardingCompleted || false,
         },
       },
       message: 'User registered successfully',
@@ -189,6 +191,7 @@ export const login = async (req, res) => {
           unit: user.unit,
           phoneNumber: user.phoneNumber,
           momPoints: user.momPoints,
+          onboardingCompleted: user.onboardingCompleted || false,
         },
       },
       message: 'Login successful',
@@ -314,6 +317,7 @@ export const verifyToken = async (req, res) => {
           unit: user.unit,
           phoneNumber: user.phoneNumber,
           momPoints: user.momPoints,
+          onboardingCompleted: user.onboardingCompleted || false,
         },
       },
     });
@@ -376,6 +380,7 @@ export const getProfile = async (req, res) => {
           unit: user.unit,
           phoneNumber: user.phoneNumber,
           momPoints: user.momPoints,
+          onboardingCompleted: user.onboardingCompleted || false,
         },
       },
     });

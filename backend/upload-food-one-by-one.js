@@ -1,0 +1,345 @@
+import { ConvexHttpClient } from "convex/browser";
+import dotenv from "dotenv";
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load environment variables
+dotenv.config({ path: join(__dirname, '.env') });
+
+const CONVEX_URL = process.env.CONVEX_URL;
+
+if (!CONVEX_URL) {
+  console.error("❌ Error: CONVEX_URL not found in environment variables");
+  process.exit(1);
+}
+
+console.log(`📡 Connecting to Convex: ${CONVEX_URL}\n`);
+
+// Initialize Convex client
+const client = new ConvexHttpClient(CONVEX_URL);
+
+// Hardcoded food items with images
+const foodItems = [
+  {
+    id: "food_001",
+    house: "Auntie Mei (Blk A-101)",
+    block: "A-101",
+    dish: "Hainanese Chicken Rice",
+    tags: ["high protein", "no dairy", "comfort"],
+    diet: ["halal-friendly"],
+    allergens: ["soy"],
+    price: "$6.50",
+    eta: "20 min",
+    image: "https://static01.nyt.com/images/2025/01/28/multimedia/KP-Hainan-Chicken-Rice-hcgv/KP-Hainan-Chicken-Rice-hcgv-mediumSquareAt3X.jpg"
+  },
+  {
+    id: "food_002",
+    house: "Uncle Lim (Blk A-205)",
+    block: "A-205",
+    dish: "Laksa with fishcake",
+    tags: ["spicy", "seafood"],
+    diet: [],
+    allergens: ["seafood", "egg"],
+    price: "$7.20",
+    eta: "25 min",
+    image: "https://anakjajan.com/wp-content/uploads/2014/10/dscf7144.jpg"
+  },
+  {
+    id: "food_003",
+    house: "Mrs Tan (Blk B-301)",
+    block: "B-301",
+    dish: "Homemade Curry Chicken",
+    tags: ["comfort", "spicy"],
+    diet: [],
+    allergens: ["dairy"],
+    price: "$8.00",
+    eta: "30 min",
+    image: "https://omnivorescookbook.com/wp-content/uploads/2019/01/1901_Hae-Mee-Hokkien-Prawn-Mee-Noodle-Soup_800.jpg"
+  },
+  {
+    id: "food_004",
+    house: "Chef Jia (Blk B-108)",
+    block: "B-108",
+    dish: "Tofu Basil Stir-Fry",
+    tags: ["vegetarian", "high protein"],
+    diet: ["vegetarian"],
+    allergens: ["soy"],
+    price: "$5.80",
+    eta: "18 min",
+    image: "https://www.indianhealthyrecipes.com/wp-content/uploads/2023/07/paneer-butter-masala-recipe.webp"
+  },
+  {
+    id: "food_005",
+    house: "Auntie Yati (Blk C-209)",
+    block: "C-209",
+    dish: "Nasi Lemak with fried egg",
+    tags: ["halal", "coconut"],
+    diet: ["halal"],
+    allergens: ["egg"],
+    price: "$6.00",
+    eta: "22 min",
+    image: "https://www.elmundoeats.com/wp-content/uploads/2024/09/Char-kway-teow-for-FP-2.jpg"
+  },
+  {
+    id: "food_006",
+    house: "Mdm Liew (Blk C-501)",
+    block: "C-501",
+    dish: "Prawn Mee Soup",
+    tags: ["seafood", "soup"],
+    diet: [],
+    allergens: ["seafood"],
+    price: "$7.50",
+    eta: "28 min",
+    image: "https://www.pregnancyeats.com/wp-content/uploads/2022/03/Salmon-Congee-in-Bowl-797x1024.jpg"
+  },
+  {
+    id: "food_007",
+    house: "Uncle Raj (Blk D-112)",
+    block: "D-112",
+    dish: "Paneer Butter Masala",
+    tags: ["vegetarian", "spicy"],
+    diet: ["vegetarian"],
+    allergens: ["dairy", "nuts"],
+    price: "$7.80",
+    eta: "26 min",
+    image: "https://www.anncoojournal.com/wp-content/uploads/2020/08/steamed-herbal-chicken-002.jpg"
+  },
+  {
+    id: "food_008",
+    house: "Auntie Bee (Blk D-318)",
+    block: "D-318",
+    dish: "Char Kway Teow",
+    tags: ["seafood", "egg", "wok hey"],
+    diet: [],
+    allergens: ["seafood", "egg"],
+    price: "$6.80",
+    eta: "24 min",
+    image: "https://omnivorescookbook.com/wp-content/uploads/2024/08/200702_Thai-Basil-Chicken_550.jpg"
+  },
+  {
+    id: "food_009",
+    house: "Chef Hana (Blk E-405)",
+    block: "E-405",
+    dish: "Salmon Congee",
+    tags: ["light", "omega-3", "soup"],
+    diet: [],
+    allergens: ["seafood"],
+    price: "$7.00",
+    eta: "27 min",
+    image: "https://noobcook.com/wp-content/uploads/2012/05/fishballnoodlesoup.jpg"
+  },
+  {
+    id: "food_010",
+    house: "Auntie Ling (Blk E-607)",
+    block: "E-607",
+    dish: "Steamed Herbal Chicken",
+    tags: ["no oil", "comfort"],
+    diet: [],
+    allergens: [],
+    price: "$8.50",
+    eta: "32 min",
+    image: "https://jesseatsandtravels.com/wp-content/uploads/2021/11/beef-rendang.jpg"
+  },
+  {
+    id: "food_011",
+    house: "Uncle Sam (Blk F-309)",
+    block: "F-309",
+    dish: "Thai Basil Chicken Rice",
+    tags: ["spicy", "high protein"],
+    diet: [],
+    allergens: ["soy"],
+    price: "$6.90",
+    eta: "20 min",
+    image: "https://ucarecdn.com/76a65f56-fcfa-44b9-aa1f-c63938b4b797/-/scale_crop/1280x1280/center/-/quality/normal/-/format/jpeg/mee-rebus.jpg"
+  },
+  {
+    id: "food_012",
+    house: "Auntie Ivy (Blk F-403)",
+    block: "F-403",
+    dish: "Fishball Noodle Soup",
+    tags: ["light", "no dairy"],
+    diet: [],
+    allergens: ["seafood", "gluten"],
+    price: "$5.90",
+    eta: "19 min",
+    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRF9-SIBg0J5lUuYofOSapOExmasOgqUjXh5w&s"
+  },
+  {
+    id: "food_013",
+    house: "Chef Ben (Blk G-110)",
+    block: "G-110",
+    dish: "Beef Rendang with rice",
+    tags: ["protein", "spicy"],
+    diet: [],
+    allergens: ["coconut"],
+    price: "$8.80",
+    eta: "33 min",
+    image: "https://i.redd.it/roast-pork-belly-and-fatty-cha-siu-on-rice-if-i-could-only-v0-6e9zxs0wh7kd1.jpg?width=6000&format=pjpg&auto=webp&s=1cacbd01f211d137a7ea434e753f224c8ecfa0da"
+  },
+  {
+    id: "food_014",
+    house: "Auntie Nur (Blk G-506)",
+    block: "G-506",
+    dish: "Mee Rebus",
+    tags: ["halal", "sweet-spicy"],
+    diet: ["halal"],
+    allergens: ["egg", "gluten"],
+    price: "$6.30",
+    eta: "23 min",
+    image: "https://thai-foodie.com/wp-content/uploads/2023/11/tom-yuum-fried-rice.jpg"
+  },
+  {
+    id: "food_015",
+    house: "Mdm Tan (Blk H-212)",
+    block: "H-212",
+    dish: "Vegetarian Bee Hoon",
+    tags: ["vegan", "no garlic option"],
+    diet: ["vegan"],
+    allergens: ["soy", "gluten"],
+    price: "$5.50",
+    eta: "17 min",
+    image: "https://nomadette.com/wp-content/uploads/2021/11/Black-Pepper-Udon-Noodles-Nomadette.jpg"
+  },
+  {
+    id: "food_016",
+    house: "Uncle Teo (Blk H-508)",
+    block: "H-508",
+    dish: "Roast Pork Rice",
+    tags: ["crispy", "savory"],
+    diet: [],
+    allergens: [],
+    price: "$7.00",
+    eta: "21 min",
+    image: "https://school-of-wok.s3.eu-west-2.amazonaws.com/recipes/show_images/40fbd38b6cccee8431940987a03567fd.jpg"
+  },
+  {
+    id: "food_017",
+    house: "Auntie May (Blk I-311)",
+    block: "I-311",
+    dish: "Tom Yum Fried Rice",
+    tags: ["Thai", "spicy"],
+    diet: [],
+    allergens: ["seafood"],
+    price: "$6.50",
+    eta: "25 min",
+    image: "https://thai-foodie.com/wp-content/uploads/2023/11/tom-yuum-fried-rice.jpg"
+  },
+  {
+    id: "food_018",
+    house: "Chef Lou (Blk I-701)",
+    block: "I-701",
+    dish: "Black Pepper Beef Udon",
+    tags: ["fusion", "high protein"],
+    diet: [],
+    allergens: ["gluten", "soy"],
+    price: "$8.20",
+    eta: "29 min",
+    image: "https://nomadette.com/wp-content/uploads/2021/11/Black-Pepper-Udon-Noodles-Nomadette.jpg"
+  },
+  {
+    id: "food_019",
+    house: "Uncle Heng (Blk J-204)",
+    block: "J-204",
+    dish: "Salted Egg Prawn Rice",
+    tags: ["seafood", "rich"],
+    diet: [],
+    allergens: ["seafood", "egg"],
+    price: "$8.50",
+    eta: "30 min",
+    image: "https://school-of-wok.s3.eu-west-2.amazonaws.com/recipes/show_images/40fbd38b6cccee8431940987a03567fd.jpg"
+  },
+  {
+    id: "food_020",
+    house: "Auntie Rosa (Blk J-403)",
+    block: "J-403",
+    dish: "Homemade Soto Ayam",
+    tags: ["halal", "comfort soup"],
+    diet: ["halal"],
+    allergens: ["egg"],
+    price: "$7.00",
+    eta: "28 min",
+    image: "https://glebekitchen.com/wp-content/uploads/2019/11/sotoayamtopbowl.jpg"
+  }
+];
+
+/**
+ * Upload food items to Convex one by one using the create mutation
+ */
+async function uploadFoodItems() {
+  try {
+    console.log("🍽️  Starting food items upload to Convex...\n");
+    console.log(`Found ${foodItems.length} food items to upload\n`);
+
+    let success = 0;
+    let failed = 0;
+    let skipped = 0;
+    const errors = [];
+
+    // Upload each item one by one
+    for (let i = 0; i < foodItems.length; i++) {
+      const food = foodItems[i];
+      try {
+        console.log(`[${i + 1}/${foodItems.length}] Uploading: ${food.dish}...`);
+        
+        await client.mutation("foods:create", {
+          itemId: food.id,
+          house: food.house,
+          block: food.block,
+          dish: food.dish,
+          description: `Delicious ${food.dish} from ${food.house}`,
+          tags: food.tags,
+          diet: food.diet,
+          allergens: food.allergens,
+          price: food.price,
+          eta: food.eta || "30 min",
+          distance: "0.5 km",
+          rating: 5.0,
+          calories: "500 cal",
+          protein: "20g protein",
+          image: food.image,
+          available: true,
+        });
+        
+        success++;
+        console.log(`   ✅ Success!`);
+      } catch (error) {
+        if (error.message && error.message.includes("already exists")) {
+          skipped++;
+          console.log(`   ⏭️  Already exists, skipping`);
+        } else {
+          failed++;
+          errors.push(`${food.id}: ${error.message}`);
+          console.log(`   ❌ Failed: ${error.message}`);
+        }
+      }
+      
+      // Small delay to avoid overwhelming the API
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    // Display results
+    console.log("\n📊 Upload Results:");
+    console.log(`✅ Successfully added: ${success}`);
+    console.log(`⏭️  Skipped (already exist): ${skipped}`);
+    console.log(`❌ Failed: ${failed}`);
+
+    if (errors.length > 0) {
+      console.log("\n⚠️  Errors:");
+      errors.forEach((error) => console.log(`   - ${error}`));
+    }
+
+    console.log("\n🎉 Food items upload complete!");
+  } catch (error) {
+    console.error("❌ Error uploading food items:");
+    console.error("Error message:", error.message);
+    console.error("Error details:", JSON.stringify(error, null, 2));
+    process.exit(1);
+  }
+}
+
+// Run the upload
+uploadFoodItems();
+

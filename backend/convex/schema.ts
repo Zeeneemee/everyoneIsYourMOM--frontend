@@ -13,6 +13,7 @@ export default defineSchema({
     unit: v.optional(v.string()),
     phoneNumber: v.optional(v.string()),
     momPoints: v.number(),
+    onboardingCompleted: v.optional(v.boolean()),
   })
     .index("by_email", ["email"]),
 

@@ -13,6 +13,9 @@ import { ProfileScreen } from './components/ProfileScreen'
 import { SettingsScreen } from './components/SettingsScreen'
 import { LoginScreen } from './components/LoginScreen'
 import { RegisterScreen } from './components/RegisterScreen'
+import { OnboardingScreen } from './components/OnboardingScreen'
+import { PaymentSuccessScreen } from './components/PaymentSuccessScreen'
+import { OrderTrackingScreen } from './components/OrderTrackingScreen'
 import { seedConvexData, isDataSeeded } from './utils/dataSeed'
 
 function App() {
@@ -54,12 +57,15 @@ function App() {
                 <Route path="/" element={<SplashScreen />} />
                 <Route path="/login" element={<LoginScreen />} />
                 <Route path="/register" element={<RegisterScreen />} />
+                <Route path="/onboarding" element={<OnboardingScreen />} />
                 <Route path="/home" element={<HomeScreen />} />
                 <Route path="/food" element={<FoodScreen />} />
                 <Route path="/clean" element={<CleaningScreen />} />
                 <Route path="/items" element={<ExchangeScreen />} />
                 <Route path="/profile" element={<ProfileScreen />} />
                 <Route path="/settings" element={<SettingsScreen />} />
+                <Route path="/payment-success" element={<PaymentSuccessScreen />} />
+                <Route path="/order-tracking" element={<OrderTrackingScreen />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
 

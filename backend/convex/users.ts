@@ -50,11 +50,23 @@ export const update = mutation({
       block: v.optional(v.string()),
       unit: v.optional(v.string()),
       phoneNumber: v.optional(v.string()),
+      onboardingCompleted: v.optional(v.boolean()),
     }),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.id, args.data);
     return await ctx.db.get(args.id);
+  },
+});
+
+// Mark onboarding as completed
+export const completeOnboarding = mutation({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.userId, { onboardingCompleted: true });
+    return await ctx.db.get(args.userId);
   },
 });
 

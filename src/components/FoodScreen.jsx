@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useVoiceAssistant } from "../contexts/VoiceAssistantContext";
 import { useConvexQuery, useConvexMutation } from "../hooks/useConvexQuery";
 import { AIMomAvatar } from "./AIMomAvatar";
 import { BottomNav } from "./BottomNav";
+import { FoodDetailModal } from "./FoodDetailModal";
+import { CheckoutModal } from "./CheckoutModal";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
@@ -22,6 +24,9 @@ export function FoodScreen() {
   const [activeFilter, setActiveFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
+  const [selectedFood, setSelectedFood] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [newOffering, setNewOffering] = useState({
     name: "",
     description: "",
@@ -50,6 +55,30 @@ export function FoodScreen() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentPage]);
+
+  // Handlers for modal flow
+  const handleOpenDetail = (food) => {
+    setSelectedFood(food);
+    setShowDetailModal(true);
+  };
+
+  const handleCloseDetail = () => {
+    setShowDetailModal(false);
+  };
+
+  const handleOrderNowFromDetail = () => {
+    setShowDetailModal(false);
+    setShowCheckoutModal(true);
+  };
+
+  const handleCloseCheckout = () => {
+    setShowCheckoutModal(false);
+  };
+
+  const handlePaymentSuccess = () => {
+    setShowCheckoutModal(false);
+    navigate('/payment-success', { state: { food: selectedFood } });
+  };
 
   const filters = [
     { name: "All", emoji: "🍽️", key: "all" },
@@ -550,6 +579,7 @@ export function FoodScreen() {
                   {/* Action Buttons */}
                   <div className="flex gap-2">
                     <Button 
+                      onClick={() => handleOpenDetail(food)}
                       className="flex-1 h-11 text-base font-semibold"
                       style={{
                         background: "linear-gradient(135deg, #FF6B35 0%, #FFB84D 100%)",
@@ -558,6 +588,7 @@ export function FoodScreen() {
                       Order Now
                     </Button>
                     <Button 
+                      onClick={() => handleOpenDetail(food)}
                       variant="outline"
                       className="h-11 px-4 bg-[#2D2D2D] border-gray-700 text-white hover:bg-[#3D3D3D]"
                     >
@@ -634,6 +665,27 @@ export function FoodScreen() {
       
       {/* Spacer for fixed nav */}
       <div className="h-20"></div>
+
+      {/* Modals */}
+      <AnimatePresence>
+        {showDetailModal && selectedFood && (
+          <FoodDetailModal
+            food={selectedFood}
+            onClose={handleCloseDetail}
+            onOrderNow={handleOrderNowFromDetail}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showCheckoutModal && selectedFood && (
+          <CheckoutModal
+            food={selectedFood}
+            onClose={handleCloseCheckout}
+            onPaymentSuccess={handlePaymentSuccess}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -57,7 +57,7 @@ export function RegisterScreen() {
       );
 
       if (result.success) {
-        navigate('/');
+        navigate('/onboarding');
       } else {
         setError(result.error || 'Registration failed');
       }
