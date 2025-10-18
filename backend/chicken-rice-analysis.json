@@ -1,0 +1,10 @@
+{
+  "foodName": "Vegetable Biryani",
+  "estimatedWeight": "300",
+  "calories": "450",
+  "protein": "10",
+  "carbohydrates": "60",
+  "fat": "18",
+  "mainIngredients": "Rice, mixed vegetables (carrots, peas, beans, potatoes), spices (turmeric, cumin, coriander), herbs (cilantro, mint), oil.",
+  "healthTips": "Choose brown rice for higher fiber content. Control portion sizes to manage calorie intake. Add more vegetables to increase nutrient density."
+}
