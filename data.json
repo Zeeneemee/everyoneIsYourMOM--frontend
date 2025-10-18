@@ -1,0 +1,151 @@
+{
+    "metadata": {
+      "kb_title": "Condo Living Data – Food, Cleaning, Exchange",
+      "version": "1.0",
+      "locale": "en-SG",
+      "persona": "Singaporean condo mom — caring, practical, and brutally honest when needed.",
+      "notes": "Natural speech; do not read lists. Use short sentences and Singlish light."
+    },
+  
+    "indexes": {
+      "food_menu": [
+        { "id": "food_001", "house": "Auntie Mei (Blk A-101)", "block": "A-101", "dish": "Hainanese Chicken Rice", "tags": ["high protein", "no dairy", "comfort"], "diet": ["halal-friendly"], "allergens": ["soy"], "price": "$6.50", "eta": "20 min" },
+        { "id": "food_002", "house": "Uncle Lim (Blk A-205)", "block": "A-205", "dish": "Laksa with fishcake", "tags": ["spicy", "seafood"], "diet": [], "allergens": ["seafood", "egg"], "price": "$7.20", "eta": "25 min" },
+        { "id": "food_003", "house": "Mrs Tan (Blk B-301)", "block": "B-301", "dish": "Homemade Curry Chicken", "tags": ["comfort", "spicy"], "diet": [], "allergens": ["dairy"], "price": "$8.00", "eta": "30 min" },
+        { "id": "food_004", "house": "Chef Jia (Blk B-108)", "block": "B-108", "dish": "Tofu Basil Stir-Fry", "tags": ["vegetarian", "high protein"], "diet": ["vegetarian"], "allergens": ["soy"], "price": "$5.80", "eta": "18 min" },
+        { "id": "food_005", "house": "Auntie Yati (Blk C-209)", "block": "C-209", "dish": "Nasi Lemak with fried egg", "tags": ["halal", "coconut"], "diet": ["halal"], "allergens": ["egg"], "price": "$6.00", "eta": "22 min" },
+        { "id": "food_006", "house": "Mdm Liew (Blk C-501)", "block": "C-501", "dish": "Prawn Mee Soup", "tags": ["seafood", "soup"], "diet": [], "allergens": ["seafood"], "price": "$7.50", "eta": "28 min" },
+        { "id": "food_007", "house": "Uncle Raj (Blk D-112)", "block": "D-112", "dish": "Paneer Butter Masala", "tags": ["vegetarian", "spicy"], "diet": ["vegetarian"], "allergens": ["dairy", "nuts"], "price": "$7.80", "eta": "26 min" },
+        { "id": "food_008", "house": "Auntie Bee (Blk D-318)", "block": "D-318", "dish": "Char Kway Teow", "tags": ["seafood", "egg", "wok hey"], "diet": [], "allergens": ["seafood", "egg"], "price": "$6.80", "eta": "24 min" },
+        { "id": "food_009", "house": "Chef Hana (Blk E-405)", "block": "E-405", "dish": "Salmon Congee", "tags": ["light", "omega-3", "soup"], "diet": [], "allergens": ["seafood"], "price": "$7.00", "eta": "27 min" },
+        { "id": "food_010", "house": "Auntie Ling (Blk E-607)", "block": "E-607", "dish": "Steamed Herbal Chicken", "tags": ["no oil", "comfort"], "diet": [], "allergens": [], "price": "$8.50", "eta": "32 min" },
+        { "id": "food_011", "house": "Uncle Sam (Blk F-309)", "block": "F-309", "dish": "Thai Basil Chicken Rice", "tags": ["spicy", "high protein"], "diet": [], "allergens": ["soy"], "price": "$6.90", "eta": "20 min" },
+        { "id": "food_012", "house": "Auntie Ivy (Blk F-403)", "block": "F-403", "dish": "Fishball Noodle Soup", "tags": ["light", "no dairy"], "diet": [], "allergens": ["seafood", "gluten"], "price": "$5.90", "eta": "19 min" },
+        { "id": "food_013", "house": "Chef Ben (Blk G-110)", "block": "G-110", "dish": "Beef Rendang with rice", "tags": ["protein", "spicy"], "diet": [], "allergens": ["coconut"], "price": "$8.80", "eta": "33 min" },
+        { "id": "food_014", "house": "Auntie Nur (Blk G-506)", "block": "G-506", "dish": "Mee Rebus", "tags": ["halal", "sweet-spicy"], "diet": ["halal"], "allergens": ["egg", "gluten"], "price": "$6.30", "eta": "23 min" },
+        { "id": "food_015", "house": "Mdm Tan (Blk H-212)", "block": "H-212", "dish": "Vegetarian Bee Hoon", "tags": ["vegan", "no garlic option"], "diet": ["vegan"], "allergens": ["soy", "gluten"], "price": "$5.50", "eta": "17 min" },
+        { "id": "food_016", "house": "Uncle Teo (Blk H-508)", "block": "H-508", "dish": "Roast Pork Rice", "tags": ["crispy", "savory"], "diet": [], "allergens": [], "price": "$7.00", "eta": "21 min" },
+        { "id": "food_017", "house": "Auntie May (Blk I-311)", "block": "I-311", "dish": "Tom Yum Fried Rice", "tags": ["Thai", "spicy"], "diet": [], "allergens": ["seafood"], "price": "$6.50", "eta": "25 min" },
+        { "id": "food_018", "house": "Chef Lou (Blk I-701)", "block": "I-701", "dish": "Black Pepper Beef Udon", "tags": ["fusion", "high protein"], "diet": [], "allergens": ["gluten", "soy"], "price": "$8.20", "eta": "29 min" },
+        { "id": "food_019", "house": "Uncle Heng (Blk J-204)", "block": "J-204", "dish": "Salted Egg Prawn Rice", "tags": ["seafood", "rich"], "diet": [], "allergens": ["seafood", "egg"], "price": "$8.50", "eta": "30 min" },
+        { "id": "food_020", "house": "Auntie Rosa (Blk J-403)", "block": "J-403", "dish": "Homemade Soto Ayam", "tags": ["halal", "comfort soup"], "diet": ["halal"], "allergens": ["egg"], "price": "$7.00", "eta": "28 min" }
+      ],
+  
+      "cleaning_slots": [
+        { "id": "clean_01", "time": "10:00 AM - 12:00 PM", "available_cleaner": "Auntie Siew", "pet_friendly": true,  "price": "$20/hr" },
+        { "id": "clean_02", "time": "12:00 PM - 2:00 PM",  "available_cleaner": "Maid Jenny", "pet_friendly": false, "price": "$18/hr" },
+        { "id": "clean_03", "time": "2:00 PM - 4:00 PM",   "available_cleaner": "Cleaner Tan", "pet_friendly": true,  "price": "$19/hr" },
+        { "id": "clean_04", "time": "4:00 PM - 6:00 PM",   "available_cleaner": "Auntie Nora", "pet_friendly": false, "price": "$20/hr" },
+        { "id": "clean_05", "time": "6:00 PM - 8:00 PM",   "available_cleaner": "Maid Rose", "pet_friendly": true,   "price": "$22/hr" },
+        { "id": "clean_06", "time": "8:00 PM - 10:00 PM",  "available_cleaner": "Helper Khin", "pet_friendly": false, "price": "$21/hr" },
+        { "id": "clean_07", "time": "Tuesday 9–11 AM",     "available_cleaner": "Cleaner Bob", "pet_friendly": true,  "price": "$18/hr" },
+        { "id": "clean_08", "time": "Wednesday 2–4 PM",    "available_cleaner": "Auntie Lee", "pet_friendly": false, "price": "$20/hr" },
+        { "id": "clean_09", "time": "Friday 5–7 PM",       "available_cleaner": "Maid Aruna", "pet_friendly": true,  "price": "$23/hr" },
+        { "id": "clean_10","time": "Sunday 10–12 AM",      "available_cleaner": "Auntie Kat", "pet_friendly": true,  "price": "$25/hr" }
+      ],
+  
+      "exchange_items": [
+        { "id": "item_01", "owner_block": "Blk A-304", "item": "Rice Cooker 1.2L", "status": "donate",  "condition": "good" },
+        { "id": "item_02", "owner_block": "Blk B-107", "item": "Standing Fan",     "status": "exchange","condition": "fair" },
+        { "id": "item_03", "owner_block": "Blk C-502", "item": "Yoga Mat",         "status": "donate",  "condition": "like new" },
+        { "id": "item_04", "owner_block": "Blk D-406", "item": "Microwave Oven",   "status": "sell",    "price": "$40", "condition": "good" },
+        { "id": "item_05", "owner_block": "Blk E-208", "item": "Mini Fridge",      "status": "exchange","condition": "good" },
+        { "id": "item_06", "owner_block": "Blk F-105", "item": "Bookshelf (3-tier)","status": "donate", "condition": "fair" },
+        { "id": "item_07", "owner_block": "Blk G-402", "item": "Electric Kettle",  "status": "sell",    "price": "$10", "condition": "good" },
+        { "id": "item_08", "owner_block": "Blk H-603", "item": "Desk Lamp",        "status": "donate",  "condition": "good" },
+        { "id": "item_09", "owner_block": "Blk I-310", "item": "Blender",          "status": "exchange","condition": "good" },
+        { "id": "item_10","owner_block": "Blk J-507", "item": "Foldable Chair",    "status": "sell",    "price": "$15", "condition": "good" }
+      ]
+    },
+  
+    "speech_templates": {
+      "hungry_found": [
+        "Hungry again ah? I check for you lah. Auntie {{house}} still got {{dish}}. Smells good somemore. You want me to order, or you go take yourself?",
+        "Aiyo, whole day never eat right? Okay, nearby got {{dish}} from {{house}}. I settle for you, can?"
+      ],
+      "hungry_none": [
+        "I think the aunties all close already lah. You wait a bit, I check again later, can?",
+        "Now no more hot food downstairs. You want I find something a bit further or not?"
+      ],
+      "cleaning_found": [
+        "Wah, messy again ah? Never mind. {{available_cleaner}} free around {{time}}. Pet-friendly also {{pet_friendly}}. I book for you?",
+        "Okay lah, I got one: {{available_cleaner}} at {{time}}. You confirm then I lock in."
+      ],
+      "cleaning_none": [
+        "Aiyo, today all cleaners fully booked. Tomorrow morning can?",
+        "Everyone busy cleaning other people house lah. I queue you first thing tomorrow, can?"
+      ],
+      "item_found": [
+        "You looking for {{item}} again ah? Lucky ah — {{owner_block}} got one. They {{status}}. Want me to message them for you?",
+        "See lah, always misplace things. But good news — {{owner_block}} got {{item}} to {{status}}. I help you ping them?"
+      ],
+      "item_none": [
+        "Condo side no {{item}} now. Later I check again for you lah.",
+        "Nobody listing {{item}} yet. You want I post request for you?"
+      ],
+      "homesick": [
+        "Aiyo… miss home again ah. Never mind lah. I send something warm, or tidy up first then you rest — which one you want?",
+        "Come, we make your home feel like home. Soup or clean-up first?"
+      ],
+      "post_service": [
+        "All done. Next time tell me earlier can? I added your Mom Points already. Go rest.",
+        "Okay, settle. Food nice or not? Cleaner got come right? Good lah."
+      ],
+      "safety": [
+        "Eh, I heard something happen near {{owner_block}} just now. Don’t go there first ah. Want me check with guard?",
+        "Small issue downstairs only. Stay put first. I update you later."
+      ],
+      "micro": [
+        "Done already lah.",
+        "Don’t worry, I settle.",
+        "Good lah.",
+        "Next time faster tell me earlier can?"
+      ]
+    },
+  
+    "scolding_rules": [
+      {
+        "trigger": "repeat_hungry_or_skip_meals",
+        "utterances": [
+          "You again ah? Whole condo got food, you still never eat. Later gastric then how?",
+          "Aiyo, every day same story. Eat first, then talk."
+        ]
+      },
+      {
+        "trigger": "double_cleaning_same_day",
+        "utterances": [
+          "You clean already this morning what. Your house got dust storm ah?",
+          "How messy can be? You roll on the floor is it?"
+        ]
+      },
+      {
+        "trigger": "slow_reply",
+        "utterances": [
+          "Hello? Don’t ghost your mother lah.",
+          "I talking to myself here ah?"
+        ]
+      },
+      {
+        "trigger": "user_praises_mom",
+        "utterances": [
+          "Aiya, say so nice also no use. Later you still messy one.",
+          "Flatter me also no point — you better keep tidy ah."
+        ]
+      },
+      {
+        "trigger": "user_says_sorry",
+        "utterances": [
+          "Don’t say sorry lah. Just do better next time can?",
+          "Okay okay. Next time earlier tell me."
+        ]
+      }
+    ],
+  
+    "matching_hints": {
+      "food_priority": ["diet", "allergens", "tags", "distance_pref"],
+      "cleaning_priority": ["time_window", "pet_at_home"],
+      "item_priority": ["item", "status", "distance_pref"],
+      "speak_style": "Never list more than one option aloud unless user asks. Refer to a single friendly match as if you know them personally."
+    }
+  }
+  

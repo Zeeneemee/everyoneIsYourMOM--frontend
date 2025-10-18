@@ -1,0 +1,33 @@
+{
+  "name": "everyoneisyourmom-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Everyone Is Your Mom - AI-powered condo community assistant",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "convex:dev": "convex dev",
+    "convex:deploy": "convex deploy",
+    "seed": "node src/scripts/seed.js"
+  },
+  "keywords": ["ai", "voice", "community", "supabase", "elevenlabs"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "convex": "^1.16.1",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "@google/generative-ai": "^0.21.0",
+    "elevenlabs-node": "^1.3.1",
+    "multer": "^1.4.5-lts.1",
+    "axios": "^1.6.7",
+    "joi": "^17.12.1",
+    "form-data": "^4.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
+  }
+}
+

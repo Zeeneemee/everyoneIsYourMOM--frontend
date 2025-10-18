@@ -1,0 +1,37 @@
+@import "tailwindcss/theme" layer(theme);
+@import "tailwindcss/preflight" layer(base);
+@import "tailwindcss/utilities" layer(utilities);
+
+@layer base {
+  :root {
+    --background: #0f0f0f;
+    --foreground: #ececec;
+    --primary: #ff6b35;
+    --primary-foreground: #fff;
+    --secondary: #ffb84d;
+    --muted: #2d2d2d;
+    --accent: #00d9ff;
+    --destructive: #ef4444;
+    --border: #ff6b351a;
+    --ring: #ff6b35;
+  }
+
+  * {
+    @apply border-gray-800;
+  }
+
+  body {
+    @apply bg-[#0F0F0F] text-white antialiased;
+  }
+
+  /* Hide scrollbar for filter tabs */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
