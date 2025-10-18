@@ -128,11 +128,12 @@ export function VoiceAssistantModal() {
     
     // Navigate after brief delay for visual feedback
     setTimeout(() => {
-      // Navigate directly to the specific food item's detail page
-      const itemId = selectedItem.id || selectedItem._id;
-      const detailRoute = `/food/${itemId}`;
+      // Use the food name to navigate via the card/:query route
+      // This works better with recommendations that may not have database IDs yet
+      const foodName = selectedItem.name || selectedItem.dish;
+      const detailRoute = `/food/card/${encodeURIComponent(foodName)}`;
       
-      console.log('🚀 Navigating to food detail:', detailRoute);
+      console.log('🚀 Navigating to food detail:', detailRoute, 'for food:', foodName);
       handleNavigation(detailRoute);
       
       // Close modal after navigation
@@ -495,11 +496,9 @@ export function VoiceAssistantModal() {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => {
-                          // Navigate directly to the specific food item's detail page
-                          const itemId = food.id || food._id;
-                          const detailRoute = `/food/${itemId}`;
-                          console.log('🍽️ Card clicked - navigating to:', detailRoute);
-                          handleNavigation(detailRoute);
+                          // Navigate to food page
+                          console.log('🍽️ Card clicked - navigating to food page');
+                          handleNavigation('/food');
                           closeVoiceAssistant();
                         }}
                         className={`w-full bg-gradient-to-r from-[#2D2D2D] to-[#1A1A1A] border rounded-xl p-4 text-left transition-all group ${

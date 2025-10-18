@@ -20,11 +20,6 @@
         }
       ]
     }
-  ],
-  "env": {
-    "VITE_ELEVENLABS_AGENT_ID": "@elevenlabs_agent_id",
-    "VITE_API_URL": "@api_url",
-    "VITE_CONVEX_URL": "@convex_url"
-  }
+  ]
 }
 
