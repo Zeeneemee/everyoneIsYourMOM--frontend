@@ -219,6 +219,100 @@ Available data: ${JSON.stringify(data)}`;
       throw new Error('Failed to create embedding');
     }
   }
+
+  /**
+   * Analyze food image and extract nutritional information
+   */
+  async analyzeFoodImage(imageData, options = {}) {
+    const IMAGE_ANALYSIS_INSTRUCTION = `
+Analyze the food in this image and provide information in this EXACT English format without any additional text or markdown:
+Food Name: [Food Name]
+Estimated Weight: [Estimated Weight in grams] g
+Calories: [Number of Calories] kcal
+Protein: [Amount of Protein] g
+Carbohydrates: [Amount of Carbohydrates] g
+Fat: [Amount of Fat] g
+Main Ingredients: [Main Ingredients]
+Health Tips: [Short relevant health tips]
+`;
+
+    try {
+      const model = this.genAI.getGenerativeModel({ 
+        model: options.model || 'gemini-2.0-flash-exp',
+        generationConfig: {
+          temperature: options.temperature ?? 0.3,
+          maxOutputTokens: options.maxTokens || 500,
+        },
+      });
+
+      // Convert image data to the format expected by Gemini
+      const imagePart = {
+        inlineData: {
+          data: imageData,
+          mimeType: options.mimeType || 'image/jpeg'
+        }
+      };
+
+      const result = await model.generateContent([IMAGE_ANALYSIS_INSTRUCTION, imagePart]);
+      const response = await result.response;
+      const text = response.text();
+
+      // Parse the structured response
+      return this.parseFoodAnalysisResponse(text);
+    } catch (error) {
+      console.error('Food Image Analysis Error:', error.message);
+      throw new Error('Failed to analyze food image');
+    }
+  }
+
+  /**
+   * Parse the structured food analysis response
+   */
+  parseFoodAnalysisResponse(text) {
+    try {
+      const lines = text.split('\n').filter(line => line.trim());
+      const result = {};
+
+      for (const line of lines) {
+        if (line.includes('Food Name:')) {
+          result.foodName = line.split('Food Name:')[1]?.trim();
+        } else if (line.includes('Estimated Weight:')) {
+          const weight = line.split('Estimated Weight:')[1]?.trim();
+          result.estimatedWeight = weight ? weight.replace('g', '').trim() : null;
+        } else if (line.includes('Calories:')) {
+          const calories = line.split('Calories:')[1]?.trim();
+          result.calories = calories ? calories.replace('kcal', '').trim() : null;
+        } else if (line.includes('Protein:')) {
+          const protein = line.split('Protein:')[1]?.trim();
+          result.protein = protein ? protein.replace('g', '').trim() : null;
+        } else if (line.includes('Carbohydrates:')) {
+          const carbs = line.split('Carbohydrates:')[1]?.trim();
+          result.carbohydrates = carbs ? carbs.replace('g', '').trim() : null;
+        } else if (line.includes('Fat:')) {
+          const fat = line.split('Fat:')[1]?.trim();
+          result.fat = fat ? fat.replace('g', '').trim() : null;
+        } else if (line.includes('Main Ingredients:')) {
+          result.mainIngredients = line.split('Main Ingredients:')[1]?.trim();
+        } else if (line.includes('Health Tips:')) {
+          result.healthTips = line.split('Health Tips:')[1]?.trim();
+        }
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Food Analysis Parsing Error:', error.message);
+      return {
+        foodName: 'Unknown',
+        estimatedWeight: null,
+        calories: null,
+        protein: null,
+        carbohydrates: null,
+        fat: null,
+        mainIngredients: 'Unable to identify',
+        healthTips: 'Please consult a nutritionist for accurate information'
+      };
+    }
+  }
 }
 
 // Export singleton instance
