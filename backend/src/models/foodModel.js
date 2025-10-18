@@ -29,6 +29,18 @@ export class FoodModel {
   }
 
   /**
+   * Get food by itemId (Convex itemId field)
+   */
+  async getByItemId(itemId) {
+    try {
+      return await convexClient.query(api.foods.getByItemId, { itemId });
+    } catch (error) {
+      console.error('Error getting food by itemId:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Create new food item
    */
   async create(data) {

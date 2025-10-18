@@ -62,6 +62,7 @@ export class VoiceAgentController {
       // Format for agent response
       const formattedResults = topResults.map((food) => ({
         id: food._id,
+        itemId: food.itemId,
         name: food.dish,
         house: food.house,
         price: food.price,
@@ -441,6 +442,7 @@ export class VoiceAgentController {
       // Format for agent response
       const formattedResults = sortedByRating.map((food) => ({
         id: food._id,
+        itemId: food.itemId,
         name: food.dish,
         house: food.house,
         price: food.price,
@@ -605,6 +607,7 @@ export class VoiceAgentController {
       // Format results
       const formattedResults = finalResults.map((food) => ({
         id: food._id,
+        itemId: food.itemId,
         name: food.dish,
         house: food.house,
         price: food.price,

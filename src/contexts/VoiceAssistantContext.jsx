@@ -18,7 +18,10 @@ export function VoiceAssistantProvider({ children }) {
   }, []);
 
   const updateRecommendations = useCallback((recommendations) => {
+    console.log("🔄 VoiceAssistantContext - Updating recommendations:", recommendations);
+    console.log("📊 Number of items:", recommendations?.length || 0);
     setSharedRecommendations(recommendations);
+    console.log("✅ Recommendations state updated");
   }, []);
 
   const clearRecommendations = useCallback(() => {
@@ -29,7 +32,7 @@ export function VoiceAssistantProvider({ children }) {
     (route) => {
       console.log("Voice Assistant - Navigating to:", route);
       navigate(route);
-      // Don't close the modal automatically, let user continue conversation
+      // Modal closing is handled by the component that calls this
     },
     [navigate]
   );

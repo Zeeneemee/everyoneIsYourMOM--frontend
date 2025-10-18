@@ -49,6 +49,27 @@ export async function getFoodById(id) {
 }
 
 /**
+ * Get food item by itemId (Convex itemId field)
+ * @param {string} itemId - Food item itemId from Convex
+ * @returns {Promise<Object>} Food item data
+ */
+export async function getFoodByItemId(itemId) {
+  try {
+    const response = await fetch(`${API_BASE}/food/item/${encodeURIComponent(itemId)}`);
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to fetch food item');
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error fetching food by itemId:', error);
+    throw error;
+  }
+}
+
+/**
  * Get all food items
  * @param {Object} filters - Optional filters
  * @returns {Promise<Object>} Food items data

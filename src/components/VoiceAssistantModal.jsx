@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Mic, MicOff, ShoppingCart, Star } from "lucide-react";
 import { useVoiceAssistant } from "../contexts/VoiceAssistantContext";
@@ -8,6 +8,7 @@ export function VoiceAssistantModal() {
   const { isOpen, openVoiceAssistant, closeVoiceAssistant, handleNavigation, updateRecommendations, clearRecommendations, sharedRecommendations } = useVoiceAssistant();
   const recommendations = sharedRecommendations;
   const [selectedIndex, setSelectedIndex] = useState(null);
+  const cardRefs = useRef([]);
 
   // Get agent ID from environment variable
   const agentId = import.meta.env.VITE_ELEVENLABS_AGENT_ID;
@@ -110,7 +111,7 @@ export function VoiceAssistantModal() {
     return null;
   };
 
-  // Function to handle voice selection and navigate to detail
+  // Function to handle voice selection - programmatically triggers card onClick
   const handleVoiceSelection = (selectionIndex) => {
     if (selectionIndex === null || selectionIndex < 0 || selectionIndex >= recommendations.length) {
       console.log("❌ Invalid selection index:", selectionIndex);
@@ -126,21 +127,28 @@ export function VoiceAssistantModal() {
     // Show visual feedback
     setSelectedIndex(selectionIndex);
     
-    // Navigate after brief delay for visual feedback
+    // Programmatically trigger card click after brief delay for visual feedback
     setTimeout(() => {
-      // Use the food name to navigate via the card/:query route
-      // This works better with recommendations that may not have database IDs yet
-      const foodName = selectedItem.name || selectedItem.dish;
-      const detailRoute = `/food/card/${encodeURIComponent(foodName)}`;
+      const cardElement = cardRefs.current[selectionIndex];
+      if (cardElement) {
+        console.log('🖱️ Programmatically clicking card', selectionIndex);
+        cardElement.click();
+      } else {
+        console.warn('⚠️ Card ref not found, falling back to direct navigation');
+        // Fallback: navigate directly using itemId or id
+        const itemIdOrId = selectedItem.itemId || selectedItem.id;
+        if (itemIdOrId) {
+          const detailRoute = `/food/${itemIdOrId}`;
+          console.log('🚀 Navigating to food detail:', detailRoute);
+          handleNavigation(detailRoute);
+        }
+      }
       
-      console.log('🚀 Navigating to food detail:', detailRoute, 'for food:', foodName);
-      handleNavigation(detailRoute);
-      
-      // Close modal after navigation
+      // Close voice assistant after navigation
       setTimeout(() => {
-        closeVoiceAssistant();
         setSelectedIndex(null);
-      }, 300);
+        closeVoiceAssistant();
+      }, 500);
     }, 400);
   };
 
@@ -261,13 +269,21 @@ export function VoiceAssistantModal() {
           }
         }
         
-        // Check if this is food recommendations (structured data)
+        // Check if this is recommendations (structured data from agent)
         if (data?.items && Array.isArray(data.items) && data.items.length > 0) {
-          const firstItem = data.items[0];
-          if (firstItem.name || firstItem.dish) {
-            console.log("Found food recommendations:", data.items);
-            updateRecommendations(data.items.slice(0, 3));
-          }
+          console.log("Found recommendations in message:", data.items);
+          
+          // Format items for display
+          const formattedItems = data.items.slice(0, 3).map(item => ({
+            id: item.id,
+            name: item.name || item.dish || item.item || 'Item',
+            house: item.house || item.cleaner || item.ownerBlock || 'Available',
+            price: item.price || 'Free',
+            eta: item.eta || item.time || item.date || item.condition || '30 min',
+            rating: item.rating || 5.0,
+          }));
+          
+          updateRecommendations(formattedItems);
         }
         
         // Handle navigation
@@ -280,19 +296,85 @@ export function VoiceAssistantModal() {
       }
     },
     onAgentToolResponse: (response) => {
-      console.log("Agent Tool Response:", response);
+      console.log("🔧 Agent Tool Response (raw):", JSON.stringify(response, null, 2));
       
-      // Extract tool response data
+      // Extract tool response data - ElevenLabs wraps it in different ways
       try {
-        const toolData = response.result || response;
+        // Try multiple ways to extract the data
+        let toolData = response;
         
-        // Check if this is food data
-        if (toolData?.items && Array.isArray(toolData.items)) {
-          console.log("Tool returned food items:", toolData.items);
-          updateRecommendations(toolData.items.slice(0, 3));
+        // Check common ElevenLabs response wrappers
+        if (response.return_value) {
+          console.log("Found return_value wrapper");
+          toolData = typeof response.return_value === 'string' ? JSON.parse(response.return_value) : response.return_value;
+        } else if (response.result) {
+          console.log("Found result wrapper");
+          toolData = typeof response.result === 'string' ? JSON.parse(response.result) : response.result;
+        } else if (response.output) {
+          console.log("Found output wrapper");
+          try {
+            toolData = typeof response.output === 'string' ? JSON.parse(response.output) : response.output;
+          } catch (e) {
+            toolData = response.output;
+          }
+        }
+        
+        console.log("✅ Extracted tool data:", toolData);
+        
+        // Check if this has items array (food, cleaning, or exchange)
+        if (toolData?.items && Array.isArray(toolData.items) && toolData.items.length > 0) {
+          const items = toolData.items.slice(0, 3);
+          
+          // Format items to ensure they have the required fields for display
+          const formattedItems = items.map(item => {
+            // If it's already properly formatted (has 'name' field)
+            if (item.name) {
+              return {
+                ...item,
+                name: item.name,
+                house: item.house || item.cleaner || item.ownerBlock || 'Available',
+                price: item.price || 'Free',
+                eta: item.eta || item.time || item.date || '30 min',
+                rating: item.rating || 5.0,
+              };
+            }
+            
+            // For cleaning slots
+            if (item.cleaner) {
+              return {
+                id: item.id,
+                name: `Cleaning Service - ${item.time}`,
+                house: item.cleaner,
+                price: item.price,
+                eta: item.date || 'Today',
+                rating: 5.0,
+              };
+            }
+            
+            // For exchange items (if item.name exists but refers to exchange item name)
+            if (item.ownerBlock) {
+              return {
+                id: item.id,
+                name: item.name || item.item,
+                house: `Block ${item.ownerBlock}`,
+                price: item.price || 'Free',
+                eta: item.condition || 'Good condition',
+                rating: 4.5,
+              };
+            }
+            
+            return item;
+          });
+          
+          console.log("🎉 Formatted items for display:", formattedItems);
+          console.log("📋 Number of recommendations to show:", formattedItems.length);
+          updateRecommendations(formattedItems);
+          console.log("✅ Recommendations updated! Cards should now be visible.");
+        } else {
+          console.log("❌ No items found in tool data or items array is empty");
         }
       } catch (e) {
-        console.error("Error parsing tool response:", e);
+        console.error("❌ Error parsing tool response:", e);
       }
     },
     onError: (error) => {
@@ -486,6 +568,7 @@ export function VoiceAssistantModal() {
                      {recommendations.map((food, index) => (
                       <motion.button
                         key={food.id || index}
+                        ref={(el) => (cardRefs.current[index] = el)}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ 
                           opacity: 1, 
@@ -496,10 +579,16 @@ export function VoiceAssistantModal() {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => {
-                          // Navigate to food page
-                          console.log('🍽️ Card clicked - navigating to food page');
-                          handleNavigation('/food');
-                          closeVoiceAssistant();
+                          // Navigate to food detail page using itemId or id
+                          const itemIdOrId = food.itemId || food.id;
+                          const detailRoute = `/food/${itemIdOrId}`;
+                          console.log('🍽️ Card clicked - navigating to food detail:', detailRoute);
+                          console.log('Food data:', { itemId: food.itemId, id: food.id, name: food.name });
+                          handleNavigation(detailRoute);
+                          // Close voice assistant after navigation
+                          setTimeout(() => {
+                            closeVoiceAssistant();
+                          }, 300);
                         }}
                         className={`w-full bg-gradient-to-r from-[#2D2D2D] to-[#1A1A1A] border rounded-xl p-4 text-left transition-all group ${
                           selectedIndex === index 

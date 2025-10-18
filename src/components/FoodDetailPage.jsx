@@ -7,6 +7,7 @@ import { Badge } from './ui/badge';
 import { CheckoutModal } from './CheckoutModal';
 import { getFoodById, getFoodCardByQuery, transformFoodData } from '../services/foodService';
 import { useAuth } from '../contexts/AuthContext';
+import { deslugify } from '../utils/slugify';
 
 export function FoodDetailPage() {
   const { id, query } = useParams();
@@ -30,12 +31,20 @@ export function FoodDetailPage() {
 
         let result;
         if (id) {
-          // Fetch by ID
+          // Let backend handle smart detection (itemId vs Convex _id)
+          console.log('🔍 Fetching food by id:', id);
           result = await getFoodById(id);
-          setFood(transformFoodData(result.data));
+          if (result.data) {
+            setFood(transformFoodData(result.data));
+          } else {
+            setError('Food item not found');
+          }
         } else if (query) {
-          // Fetch by query name
-          result = await getFoodCardByQuery(query);
+          // Fetch by query name - convert slug back to searchable format
+          // e.g., "hainanesechickenrice" → "hainanese chicken rice"
+          const searchQuery = deslugify(query);
+          console.log('🔍 Searching for food with deslugified query:', searchQuery, 'from slug:', query);
+          result = await getFoodCardByQuery(searchQuery);
           if (result.data && result.data.length > 0) {
             setFood(transformFoodData(result.data[0]));
           } else {

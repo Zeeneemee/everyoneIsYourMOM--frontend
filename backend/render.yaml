@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: everyoneisyourmom-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: CONVEX_URL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.0-flash-exp
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: ELEVENLABS_VOICE_ID
+        sync: false
+      - key: ELEVENLABS_AGENT_ID
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: AI_AGENT_TEMPERATURE
+        value: 0.7
+      - key: AI_AGENT_MAX_TOKENS
+        value: 500
+      - key: MEM0_API_KEY
+        sync: false
+      - key: MEM0_USER_ID_PREFIX
+        value: mom_user_
+    healthCheckPath: /api/health
+

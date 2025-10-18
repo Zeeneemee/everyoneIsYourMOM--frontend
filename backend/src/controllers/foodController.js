@@ -93,12 +93,24 @@ export class FoodController {
   }
 
   /**
-   * Get food by ID
+   * Get food by ID (smart detection: itemId or Convex _id)
    */
   async getFoodById(req, res) {
     try {
       const { id } = req.params;
-      const food = await foodModel.getById(id);
+      console.log('Looking up food by id:', id);
+      
+      // Smart detection: check if id is an itemId (like "food_001") or Convex _id
+      const isItemId = id.includes('_') || id.startsWith('food') || id.startsWith('clean') || id.startsWith('exchange');
+      
+      let food;
+      if (isItemId) {
+        console.log('Detected as itemId, using getByItemId');
+        food = await foodModel.getByItemId(id);
+      } else {
+        console.log('Detected as Convex _id, using getById');
+        food = await foodModel.getById(id);
+      }
       
       if (!food) {
         return res.status(404).json({
@@ -113,6 +125,36 @@ export class FoodController {
       });
     } catch (error) {
       console.error('Get food by ID error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch food item',
+      });
+    }
+  }
+
+  /**
+   * Get food by itemId (Convex itemId field)
+   */
+  async getFoodByItemId(req, res) {
+    try {
+      const { itemId } = req.params;
+      console.log('Looking up food by itemId:', itemId);
+      
+      const food = await foodModel.getByItemId(itemId);
+      
+      if (!food) {
+        return res.status(404).json({
+          success: false,
+          error: 'Food item not found',
+        });
+      }
+      
+      res.json({
+        success: true,
+        data: food,
+      });
+    } catch (error) {
+      console.error('Get food by itemId error:', error);
       res.status(500).json({
         success: false,
         error: 'Failed to fetch food item',

@@ -44,7 +44,7 @@ router.get('/featured', foodController.getFeaturedFood.bind(foodController));
 // Get trending food items
 router.get('/trending', foodController.getTrendingFood.bind(foodController));
 
-// Get food by specific ID
+// Get food by specific ID (handles both itemId and Convex _id with smart detection)
 router.get('/:id', foodController.getFoodById.bind(foodController));
 
 // ==================== AUTHENTICATED ROUTES ====================
