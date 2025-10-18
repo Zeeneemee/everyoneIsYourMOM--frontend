@@ -12,16 +12,68 @@ export const getAll = query({
     status: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    let q = ctx.db.query("exchangeItems");
+    let items;
 
     if (args.available !== undefined) {
-      q = q.withIndex("by_available", (q) => q.eq("available", args.available));
+      items = await ctx.db
+        .query("exchangeItems")
+        .withIndex("by_available", (q) => q.eq("available", args.available!))
+        .collect();
     } else if (args.status) {
-      q = q.withIndex("by_status", (q) => q.eq("status", args.status));
+      items = await ctx.db
+        .query("exchangeItems")
+        .withIndex("by_status", (q) => q.eq("status", args.status!))
+        .collect();
+    } else {
+      items = await ctx.db.query("exchangeItems").collect();
     }
 
-    const items = await q.collect();
     return items.sort((a, b) => b._creationTime - a._creationTime);
+  },
+});
+
+// Get paginated exchange items (12 per page)
+export const getPaginated = query({
+  args: {
+    page: v.number(),
+    pageSize: v.optional(v.number()),
+    available: v.optional(v.boolean()),
+    status: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const pageSize = args.pageSize || 12;
+    const offset = (args.page - 1) * pageSize;
+    
+    let allItems;
+
+    if (args.available !== undefined) {
+      allItems = await ctx.db
+        .query("exchangeItems")
+        .withIndex("by_available", (q) => q.eq("available", args.available!))
+        .collect();
+    } else if (args.status) {
+      allItems = await ctx.db
+        .query("exchangeItems")
+        .withIndex("by_status", (q) => q.eq("status", args.status!))
+        .collect();
+    } else {
+      allItems = await ctx.db.query("exchangeItems").collect();
+    }
+    
+    allItems = allItems.sort((a, b) => b._creationTime - a._creationTime);
+    
+    const total = allItems.length;
+    const items = allItems.slice(offset, offset + pageSize);
+    const totalPages = Math.ceil(total / pageSize);
+    
+    return {
+      items,
+      page: args.page,
+      pageSize,
+      total,
+      totalPages,
+      hasMore: args.page < totalPages,
+    };
   },
 });
 
@@ -124,17 +176,39 @@ export const create = mutation({
     description: v.optional(v.string()),
     status: v.string(),
     condition: v.string(),
-    price: v.optional(v.string()),
+    price: v.optional(v.union(v.string(), v.null())),
     category: v.optional(v.string()),
+    image: v.optional(v.string()),
     images: v.optional(v.array(v.string())),
+    available: v.optional(v.boolean()),
     userId: v.optional(v.id("users")),
   },
   handler: async (ctx, args) => {
+    // Check if item already exists
+    const existing = await ctx.db
+      .query("exchangeItems")
+      .withIndex("by_item_id", (q) => q.eq("itemId", args.itemId))
+      .first();
+    
+    if (existing) {
+      console.log(`Exchange item ${args.itemId} already exists, skipping...`);
+      return existing._id;
+    }
+    
     return await ctx.db.insert("exchangeItems", {
-      ...args,
+      itemId: args.itemId,
+      ownerBlock: args.ownerBlock,
+      item: args.item,
+      description: args.description,
+      status: args.status,
+      condition: args.condition,
+      price: args.price || undefined,
+      category: args.category,
+      image: args.image,
       images: args.images || [],
-      available: true,
+      available: args.available ?? true,
       hasInterest: false,
+      userId: args.userId,
     });
   },
 });

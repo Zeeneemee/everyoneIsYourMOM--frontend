@@ -1,4 +1,5 @@
 import express from 'express';
+import authRoutes from './authRoutes.js';
 import foodRoutes from './foodRoutes.js';
 import cleaningRoutes from './cleaningRoutes.js';
 import exchangeRoutes from './exchangeRoutes.js';
@@ -17,6 +18,7 @@ router.get('/health', (req, res) => {
 });
 
 // API routes
+router.use('/auth', authRoutes);
 router.use('/food', foodRoutes);
 router.use('/cleaning', cleaningRoutes);
 router.use('/exchange', exchangeRoutes);

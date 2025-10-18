@@ -64,7 +64,8 @@ export default defineSchema({
     availableCleaner: v.string(),
     petFriendly: v.boolean(),
     price: v.string(),
-    duration: v.number(),
+    duration: v.optional(v.number()),
+    image: v.optional(v.string()),
     available: v.boolean(),
     description: v.optional(v.string()),
   })
@@ -95,10 +96,11 @@ export default defineSchema({
     condition: v.string(), // like new, good, fair, poor
     price: v.optional(v.string()),
     category: v.optional(v.string()),
+    image: v.optional(v.string()),
     images: v.array(v.string()),
     userId: v.optional(v.id("users")),
     available: v.boolean(),
-    hasInterest: v.boolean(),
+    hasInterest: v.optional(v.boolean()),
   })
     .index("by_item_id", ["itemId"])
     .index("by_status", ["status"])

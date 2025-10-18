@@ -29,6 +29,46 @@ export const getAllSlots = query({
   },
 });
 
+// Get paginated cleaning slots (12 per page)
+export const getPaginated = query({
+  args: {
+    page: v.number(),
+    pageSize: v.optional(v.number()),
+    available: v.optional(v.boolean()),
+    petFriendly: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const pageSize = args.pageSize || 12;
+    const offset = (args.page - 1) * pageSize;
+    
+    let q = ctx.db.query("cleaningSlots");
+    
+    if (args.available !== undefined) {
+      q = q.withIndex("by_available", (q) => q.eq("available", args.available));
+    }
+    
+    let allItems = await q.collect();
+    
+    // Filter by pet-friendly if specified
+    if (args.petFriendly !== undefined) {
+      allItems = allItems.filter((slot) => slot.petFriendly === args.petFriendly);
+    }
+    
+    const total = allItems.length;
+    const items = allItems.slice(offset, offset + pageSize);
+    const totalPages = Math.ceil(total / pageSize);
+    
+    return {
+      items,
+      page: args.page,
+      pageSize,
+      total,
+      totalPages,
+      hasMore: args.page < totalPages,
+    };
+  },
+});
+
 // Get slot by ID
 export const getSlotById = query({
   args: { id: v.id("cleaningSlots") },
@@ -145,13 +185,26 @@ export const createSlot = mutation({
     petFriendly: v.boolean(),
     price: v.string(),
     duration: v.optional(v.number()),
+    image: v.optional(v.string()),
+    available: v.optional(v.boolean()),
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    // Check if slot already exists
+    const existing = await ctx.db
+      .query("cleaningSlots")
+      .withIndex("by_slot_id", (q) => q.eq("slotId", args.slotId))
+      .first();
+    
+    if (existing) {
+      console.log(`Cleaning slot ${args.slotId} already exists, skipping...`);
+      return existing._id;
+    }
+    
     return await ctx.db.insert("cleaningSlots", {
       ...args,
       duration: args.duration || 2,
-      available: true,
+      available: args.available ?? true,
     });
   },
 });

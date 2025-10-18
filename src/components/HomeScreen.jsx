@@ -6,7 +6,7 @@ import { BottomNav } from "./BottomNav";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
-import { Mic, Send, Sparkles, ChefHat, Sparkle, Home, Package } from "lucide-react";
+import { Mic, Send, Sparkles, ChefHat, Sparkle, Home, Package, Settings } from "lucide-react";
 
 export function HomeScreen() {
   const navigate = useNavigate();
@@ -94,12 +94,12 @@ export function HomeScreen() {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge className="bg-[#FFB84D]/20 text-[#FFB84D] border border-[#FFB84D]/30 text-xs hidden sm:flex">
-              <Sparkle className="w-3 h-3 mr-1" />
-              120 Mom Points
-            </Badge>
-          </div>
+          <button
+            onClick={() => navigate('/settings')}
+            className="text-white hover:text-[#FF6B35] transition-colors"
+          >
+            <Settings className="w-6 h-6" />
+          </button>
         </div>
       </div>
 

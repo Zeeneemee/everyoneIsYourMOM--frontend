@@ -1,23 +1,27 @@
+import jwt from 'jsonwebtoken';
+
+const ACCESS_TOKEN_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
+
 /**
- * Authentication middleware (placeholder)
- * 
- * In production, this would:
- * - Verify JWT tokens
- * - Check Supabase auth session
- * - Validate API keys
- * - Attach user info to req.user
+ * Authentication middleware
+ * Verifies JWT tokens from cookies and attaches user info to req.user
  */
 export const authMiddleware = (req, res, next) => {
-  // For now, we'll just pass through
-  // In production, integrate with Supabase Auth or JWT
+  const accessToken = req.cookies?.accessToken;
   
-  const authHeader = req.headers.authorization;
-  
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    // Token verification would go here
-    req.user = {
-      id: 'temp-user-id', // This would come from decoded token
-    };
+  if (accessToken) {
+    try {
+      const decoded = jwt.verify(accessToken, ACCESS_TOKEN_SECRET);
+      if (decoded.type === 'access') {
+        req.user = {
+          id: decoded.userId,
+          email: decoded.email,
+        };
+      }
+    } catch (error) {
+      console.error('Token verification error:', error.message);
+      // Don't block, just don't attach user
+    }
   }
   
   next();
@@ -27,12 +31,20 @@ export const authMiddleware = (req, res, next) => {
  * Optional auth - doesn't block if no auth provided
  */
 export const optionalAuth = (req, res, next) => {
-  const authHeader = req.headers.authorization;
+  const accessToken = req.cookies?.accessToken;
   
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    req.user = {
-      id: 'temp-user-id',
-    };
+  if (accessToken) {
+    try {
+      const decoded = jwt.verify(accessToken, ACCESS_TOKEN_SECRET);
+      if (decoded.type === 'access') {
+        req.user = {
+          id: decoded.userId,
+          email: decoded.email,
+        };
+      }
+    } catch (error) {
+      console.error('Token verification error:', error.message);
+    }
   }
   
   next();
@@ -42,20 +54,36 @@ export const optionalAuth = (req, res, next) => {
  * Required auth - blocks if no valid auth
  */
 export const requireAuth = (req, res, next) => {
-  const authHeader = req.headers.authorization;
+  const accessToken = req.cookies?.accessToken;
   
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!accessToken) {
     return res.status(401).json({
       success: false,
       error: 'Authentication required',
     });
   }
   
-  // Token verification would go here
-  req.user = {
-    id: 'temp-user-id',
-  };
-  
-  next();
+  try {
+    const decoded = jwt.verify(accessToken, ACCESS_TOKEN_SECRET);
+    
+    if (decoded.type !== 'access') {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid token type',
+      });
+    }
+    
+    req.user = {
+      id: decoded.userId,
+      email: decoded.email,
+    };
+    next();
+  } catch (error) {
+    console.error('Token verification error:', error.message);
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid or expired token',
+    });
+  }
 };
 

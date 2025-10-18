@@ -1,12 +1,45 @@
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { AIMomAvatar } from "./AIMomAvatar";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Mail, Phone, Chrome } from "lucide-react";
+import { Mail, Lock, Chrome, Loader2, LogIn } from "lucide-react";
+import { useState } from "react";
 
 export function SplashScreen() {
   const navigate = useNavigate();
+  const { login, error: authError } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const result = await login(email, password);
+      
+      if (result.success) {
+        navigate('/home');
+      } else {
+        setError(result.error || 'Login failed');
+      }
+    } catch (err) {
+      setError('An unexpected error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleAuth = () => {
+    // TODO: Implement Google OAuth
+    // This will need to be connected to your backend Google OAuth endpoint
+    setError("Google authentication coming soon!");
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0F0F0F] via-[#1A1A1A] to-[#0F0F0F] flex flex-col items-center justify-center p-6 relative overflow-hidden">
       {/* Animated background elements */}
@@ -69,22 +102,73 @@ export function SplashScreen() {
         AI-powered comfort on demand. Your personal assistant for food, cleaning, and everyday care. 💝
       </motion.p>
 
-      {/* Login Options */}
+      {/* Login Form */}
       <motion.div
         initial={{ y: 30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.8 }}
         className="w-full max-w-sm space-y-4"
       >
-        {/* Email Input */}
-        <div className="relative">
-          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-          <Input
-            type="email"
-            placeholder="Enter your email"
-            className="pl-10 h-12"
-          />
-        </div>
+        <form onSubmit={handleLogin} className="space-y-4">
+          {/* Email Input */}
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+            <Input
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="pl-10 h-12 bg-[#2D2D2D] border-gray-700 text-white"
+              required
+              disabled={loading}
+            />
+          </div>
+
+          {/* Password Input */}
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+            <Input
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="pl-10 h-12 bg-[#2D2D2D] border-gray-700 text-white"
+              required
+              disabled={loading}
+            />
+          </div>
+
+          {/* Error Message */}
+          {(error || authError) && (
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+              <p className="text-red-400 text-sm">{error || authError}</p>
+            </div>
+          )}
+
+          {/* Login Button */}
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full h-14 relative overflow-hidden group text-lg"
+            style={{
+              background: "linear-gradient(135deg, #FF6B35 0%, #FFB84D 100%)",
+              border: "1px solid rgba(0, 217, 255, 0.3)",
+            }}
+          >
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Logging in...</span>
+              </span>
+            ) : (
+              <span className="flex items-center justify-center gap-2">
+                <LogIn className="w-5 h-5" />
+                <span>Call Mom</span>
+                <span className="text-xl">📞</span>
+              </span>
+            )}
+          </Button>
+        </form>
 
         {/* Divider */}
         <div className="flex items-center gap-3">
@@ -93,38 +177,30 @@ export function SplashScreen() {
           <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent" />
         </div>
 
-        {/* Social Login Buttons */}
-        <div className="grid grid-cols-2 gap-3">
-          <Button
-            variant="outline"
-            className="h-12"
-          >
-            <Phone className="w-5 h-5 mr-2" />
-            Phone
-          </Button>
-          <Button
-            variant="outline"
-            className="h-12"
-          >
-            <Chrome className="w-5 h-5 mr-2" />
-            Google
-          </Button>
-        </div>
-
-        {/* Main CTA */}
+        {/* Google Auth Button */}
         <Button
-          onClick={() => navigate('/home')}
-          className="w-full h-14 mt-6 relative overflow-hidden group text-lg"
-          style={{
-            background: "linear-gradient(135deg, #FF6B35 0%, #FFB84D 100%)",
-            border: "1px solid rgba(0, 217, 255, 0.3)",
-          }}
+          type="button"
+          onClick={handleGoogleAuth}
+          variant="outline"
+          className="w-full h-12 border-gray-700 hover:bg-[#2D2D2D] hover:border-[#FF6B35]/50 transition-all"
+          disabled={loading}
         >
-          <span className="flex items-center justify-center gap-2">
-            <span>Call Mom</span>
-            <span className="text-xl">📞</span>
-          </span>
+          <Chrome className="w-5 h-5 mr-2" />
+          <span className="text-white">Continue with Google</span>
         </Button>
+
+        {/* Register Link */}
+        <div className="text-center mt-6">
+          <p className="text-gray-400 text-sm">
+            Don't have an account?{' '}
+            <Link
+              to="/register"
+              className="text-[#FF6B35] hover:text-[#FFB84D] font-semibold transition-colors"
+            >
+              Register here
+            </Link>
+          </p>
+        </div>
 
         {/* Terms */}
         <p className="text-xs text-gray-600 text-center mt-6">

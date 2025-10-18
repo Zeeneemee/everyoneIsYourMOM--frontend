@@ -1,172 +1,283 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { AIMomAvatar } from "./AIMomAvatar";
 import { BottomNav } from "./BottomNav";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import { User, MapPin, Phone, Mail, Sparkle, Settings, LogOut, Trophy, Heart } from "lucide-react";
+import { MapPin, Settings, ChevronLeft, Edit2, Coins, ShoppingBag, Sparkles, Package } from "lucide-react";
 
 export function ProfileScreen() {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("preferences");
+  
   const [user] = useState({
-    name: "Sarah Chen",
-    location: "Block A, #05-101",
-    phone: "+65 8123 4567",
-    email: "sarah.chen@email.com",
-    momPoints: 120,
-    level: "Super Mom",
-    joinedDate: "January 2024",
+    name: "Alex Johnson",
+    email: "alex.johnson@email.com",
+    location: "San Francisco, CA",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop",
     stats: {
-      foodShared: 24,
-      helpGiven: 18,
-      itemsExchanged: 12
+      points: 1240,
+      orders: 45,
+      cleanings: 12,
+      exchanges: 8
+    },
+    preferences: {
+      diet: ["Vegetarian", "Keto"],
+      allergens: ["Dairy", "Nuts"],
+      cuisines: ["Italian", "Asian", "Mediterranean"],
+      healthGoals: ["Weight Loss", "More Energy"],
+      cleaningFrequency: "Weekly",
+      exchangeInterests: ["Books", "Tech", "Home Decor"]
     }
   });
 
   return (
     <div className="min-h-screen bg-[#0F0F0F] flex flex-col">
       {/* Header */}
-      <div className="bg-gradient-to-b from-[#1A1A1A] to-[#0F0F0F] px-4 sm:px-6 py-4 border-b border-[#FF6B35]/10">
+      <div className="bg-[#0F0F0F] px-4 sm:px-6 py-4">
         <div className="flex items-center justify-between max-w-4xl mx-auto">
           <Button 
             variant="ghost" 
             onClick={() => navigate(-1)}
-            className="text-white hover:text-[#FF6B35]"
+            className="text-white hover:text-[#FF6B35] hover:bg-transparent p-0"
           >
-            ← Back
+            <ChevronLeft className="w-6 h-6" />
           </Button>
-          <h1 className="text-white text-lg font-semibold">Profile</h1>
+          <div className="flex-1 ml-4">
+            <h1 className="text-white text-xl font-semibold">Profile</h1>
+            <p className="text-gray-400 text-sm">Manage your account</p>
+          </div>
           <Button 
             variant="ghost" 
-            className="text-white hover:text-[#FF6B35]"
+            onClick={() => navigate('/settings')}
+            className="text-white hover:text-[#FF6B35] hover:bg-transparent p-0"
           >
-            <Settings className="w-5 h-5" />
+            <Settings className="w-6 h-6" />
           </Button>
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 max-w-4xl mx-auto w-full pb-24">
-        {/* Profile Header */}
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 max-w-4xl mx-auto w-full pb-24">
+        {/* Profile Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-br from-[#FF6B35] to-[#FFB84D] rounded-2xl p-6 mb-6"
+          className="bg-[#1A1A1A] rounded-2xl p-6 mb-6 border border-[#2A2A2A]"
         >
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-start gap-4 mb-6">
+            <img 
+              src={user.avatar} 
+              alt={user.name}
+              className="w-24 h-24 rounded-full object-cover"
+            />
             <div className="flex-1">
               <h2 className="text-white text-xl font-bold mb-1">{user.name}</h2>
-              <div className="flex items-center gap-1 text-white/80 text-sm mb-2">
+              <p className="text-gray-400 text-sm mb-2">{user.email}</p>
+              <div className="flex items-center gap-1 text-gray-400 text-sm">
                 <MapPin className="w-4 h-4" />
                 <span>{user.location}</span>
               </div>
-              <Badge className="bg-white/20 text-white border-white/30 text-xs">
-                <Trophy className="w-3 h-3 mr-1" />
-                {user.level}
-              </Badge>
             </div>
+            <Button 
+              variant="ghost" 
+              className="text-[#FF6B35] hover:text-[#FF6B35] hover:bg-transparent p-0"
+            >
+              <Edit2 className="w-5 h-5" />
+            </Button>
           </div>
 
-          {/* Mom Points */}
-          <div className="bg-white/10 backdrop-blur rounded-xl p-4 border border-white/20">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Sparkle className="w-5 h-5 text-white" />
-                <span className="text-white font-semibold">Mom Points</span>
+          {/* Stats */}
+          <div className="w-full h-px bg-[#2A2A2A] mb-6"></div>
+          <div className="grid grid-cols-4 gap-4">
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1 text-[#FFB84D] text-xl font-bold mb-1">
+                <Coins className="w-5 h-5" />
+                <span>{user.stats.points}</span>
               </div>
-              <span className="text-2xl font-bold text-white">{user.momPoints}</span>
+              <div className="text-xs text-gray-400">Points</div>
             </div>
-            <div className="w-full bg-white/20 rounded-full h-2">
-              <div 
-                className="bg-white rounded-full h-2 transition-all duration-500"
-                style={{ width: `${(user.momPoints / 200) * 100}%` }}
-              />
+            <div className="text-center">
+              <div className="text-white text-xl font-bold mb-1">{user.stats.orders}</div>
+              <div className="text-xs text-gray-400">Orders</div>
             </div>
-            <p className="text-white/70 text-xs mt-2">{200 - user.momPoints} points to next level</p>
+            <div className="text-center">
+              <div className="text-white text-xl font-bold mb-1">{user.stats.cleanings}</div>
+              <div className="text-xs text-gray-400">Cleanings</div>
+            </div>
+            <div className="text-center">
+              <div className="text-white text-xl font-bold mb-1">{user.stats.exchanges}</div>
+              <div className="text-xs text-gray-400">Exchanges</div>
+            </div>
           </div>
         </motion.div>
 
-        {/* Stats Cards */}
+        {/* Tabs */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="grid grid-cols-3 gap-3 mb-6"
+          className="grid grid-cols-2 gap-3 mb-6"
         >
-          <div className="bg-[#1A1A1A] rounded-xl p-4 border border-[#FF6B35]/20">
-            <div className="text-2xl mb-2">🍽️</div>
-            <div className="text-2xl font-bold text-white mb-1">{user.stats.foodShared}</div>
-            <div className="text-xs text-gray-400">Food Shared</div>
-          </div>
-          <div className="bg-[#1A1A1A] rounded-xl p-4 border border-[#FF6B35]/20">
-            <div className="text-2xl mb-2">✨</div>
-            <div className="text-2xl font-bold text-white mb-1">{user.stats.helpGiven}</div>
-            <div className="text-xs text-gray-400">Help Given</div>
-          </div>
-          <div className="bg-[#1A1A1A] rounded-xl p-4 border border-[#FF6B35]/20">
-            <div className="text-2xl mb-2">📦</div>
-            <div className="text-2xl font-bold text-white mb-1">{user.stats.itemsExchanged}</div>
-            <div className="text-xs text-gray-400">Items Shared</div>
-          </div>
+          <button
+            onClick={() => setActiveTab("preferences")}
+            className={`py-3 rounded-xl font-medium transition-all ${
+              activeTab === "preferences"
+                ? "bg-[#5A3826] text-white"
+                : "bg-transparent text-gray-400"
+            }`}
+          >
+            Preferences
+          </button>
+          <button
+            onClick={() => setActiveTab("history")}
+            className={`py-3 rounded-xl font-medium transition-all ${
+              activeTab === "history"
+                ? "bg-[#5A3826] text-white"
+                : "bg-transparent text-gray-400"
+            }`}
+          >
+            History
+          </button>
         </motion.div>
 
-        {/* Contact Information */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-[#1A1A1A] rounded-xl p-4 border border-[#FF6B35]/20 mb-6"
-        >
-          <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-            <User className="w-4 h-4 text-[#FF6B35]" />
-            Contact Information
-          </h3>
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 text-gray-300">
-              <Phone className="w-4 h-4 text-gray-400" />
-              <span className="text-sm">{user.phone}</span>
+        {/* Preferences Content */}
+        {activeTab === "preferences" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="space-y-4"
+          >
+            {/* Diet Preferences */}
+            <div className="bg-[#1A1A1A] rounded-2xl p-6 border border-[#2A2A2A]">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-white text-lg font-semibold">Diet Preferences</h3>
+                <Button 
+                  variant="ghost" 
+                  className="text-[#FF6B35] hover:text-[#FF6B35] hover:bg-transparent p-0"
+                >
+                  <Edit2 className="w-5 h-5" />
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {user.preferences.diet.map((item, idx) => (
+                  <Badge 
+                    key={idx}
+                    className="bg-[#2A2A2A] text-white border-[#3A3A3A] px-3 py-1.5"
+                  >
+                    <span className="mr-2">{idx === 0 ? "🥗" : "🥑"}</span>
+                    {item}
+                  </Badge>
+                ))}
+              </div>
             </div>
-            <div className="flex items-center gap-3 text-gray-300">
-              <Mail className="w-4 h-4 text-gray-400" />
-              <span className="text-sm">{user.email}</span>
-            </div>
-            <div className="flex items-center gap-3 text-gray-300">
-              <Heart className="w-4 h-4 text-gray-400" />
-              <span className="text-sm">Member since {user.joinedDate}</span>
-            </div>
-          </div>
-        </motion.div>
 
-        {/* Actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="space-y-3"
-        >
-          <Button 
-            variant="outline" 
-            className="w-full bg-[#1A1A1A] border-[#FF6B35]/20 text-white hover:bg-[#FF6B35]/10 hover:border-[#FF6B35]/50"
+            {/* Allergens */}
+            <div className="bg-[#1A1A1A] rounded-2xl p-6 border border-[#2A2A2A]">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-white text-lg font-semibold">Allergens</h3>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {user.preferences.allergens.map((item, idx) => (
+                  <Badge 
+                    key={idx}
+                    className="bg-[#2A2A2A] text-white border-[#3A3A3A] px-3 py-1.5"
+                  >
+                    <span className="mr-2">⚠️</span>
+                    <span className="mr-2">{idx === 0 ? "🥛" : "🥜"}</span>
+                    {item}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            {/* Favorite Cuisines */}
+            <div className="bg-[#1A1A1A] rounded-2xl p-6 border border-[#2A2A2A]">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-white text-lg font-semibold">Favorite Cuisines</h3>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {user.preferences.cuisines.map((item, idx) => (
+                  <Badge 
+                    key={idx}
+                    className="bg-[#2A2A2A] text-white border-[#3A3A3A] px-3 py-1.5"
+                  >
+                    <span className="mr-2">
+                      {idx === 0 ? "🍝" : idx === 1 ? "🍜" : "🥙"}
+                    </span>
+                    {item}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            {/* Health Goals */}
+            <div className="bg-[#1A1A1A] rounded-2xl p-6 border border-[#2A2A2A]">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-white text-lg font-semibold">Health Goals</h3>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {user.preferences.healthGoals.map((item, idx) => (
+                  <Badge 
+                    key={idx}
+                    className="bg-[#2A2A2A] text-white border-[#3A3A3A] px-3 py-1.5"
+                  >
+                    <span className="mr-2">{idx === 0 ? "⚖️" : "⚡"}</span>
+                    {item}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            {/* Cleaning Frequency */}
+            <div className="bg-[#1A1A1A] rounded-2xl p-6 border border-[#2A2A2A]">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-white text-lg font-semibold">Cleaning Frequency</h3>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Badge className="bg-[#2A2A2A] text-white border-[#3A3A3A] px-3 py-1.5">
+                  <span className="mr-2">✨</span>
+                  {user.preferences.cleaningFrequency}
+                </Badge>
+              </div>
+            </div>
+
+            {/* Exchange Interests */}
+            <div className="bg-[#1A1A1A] rounded-2xl p-6 border border-[#2A2A2A]">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-white text-lg font-semibold">Exchange Interests</h3>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {user.preferences.exchangeInterests.map((item, idx) => (
+                  <Badge 
+                    key={idx}
+                    className="bg-[#2A2A2A] text-white border-[#3A3A3A] px-3 py-1.5"
+                  >
+                    <span className="mr-2">
+                      {idx === 0 ? "📚" : idx === 1 ? "💻" : "🏠"}
+                    </span>
+                    {item}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* History Content */}
+        {activeTab === "history" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="bg-[#1A1A1A] rounded-2xl p-6 border border-[#2A2A2A]"
           >
-            <Settings className="w-4 h-4 mr-2" />
-            Edit Profile
-          </Button>
-          <Button 
-            variant="outline" 
-            className="w-full bg-[#1A1A1A] border-red-500/20 text-red-400 hover:bg-red-500/10 hover:border-red-500/50"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Sign Out
-          </Button>
-        </motion.div>
+            <p className="text-gray-400 text-center py-8">History coming soon...</p>
+          </motion.div>
+        )}
       </div>
 
       {/* Bottom Navigation */}
       <BottomNav />
-      
-      {/* Spacer for fixed nav */}
-      <div className="h-20"></div>
     </div>
   );
 }

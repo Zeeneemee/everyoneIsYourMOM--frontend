@@ -1,5 +1,14 @@
-import OpenAI from 'openai';
 import { config } from '../config/database.js';
+
+// Lazy load OpenAI to handle missing package gracefully
+let OpenAI = null;
+try {
+  const openaiModule = await import('openai');
+  OpenAI = openaiModule.default;
+} catch (error) {
+  console.warn('⚠️  OpenAI package not installed. Speech-to-text will not be available.');
+  console.warn('   To enable voice features, run: npm install openai');
+}
 
 /**
  * OpenAI Whisper Service for Speech-to-Text only
@@ -7,8 +16,11 @@ import { config } from '../config/database.js';
  */
 export class WhisperService {
   constructor() {
-    // Only initialize if API key is provided
-    if (config.openai.apiKey) {
+    // Only initialize if package is available and API key is provided
+    if (!OpenAI) {
+      this.client = null;
+      console.warn('⚠️  OpenAI package not available. Speech-to-text disabled.');
+    } else if (config.openai.apiKey) {
       this.client = new OpenAI({
         apiKey: config.openai.apiKey,
       });

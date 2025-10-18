@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import { useConvexQuery, useConvexMutation } from "../hooks/useConvexQuery";
 import { AIMomAvatar } from "./AIMomAvatar";
 import { BottomNav } from "./BottomNav";
 import { Button } from "./ui/button";
@@ -9,12 +11,14 @@ import { Badge } from "./ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
-import { ArrowLeft, Search, Star, Clock, MapPin, Heart, MessageCircle, ChefHat, Home, Sparkles, Package, Flame, Beef, Plus } from "lucide-react";
+import { ArrowLeft, Search, Star, Clock, MapPin, Heart, MessageCircle, ChefHat, Home, Sparkles, Package, Flame, Beef, Plus, Loader2, Settings } from "lucide-react";
 
 export function FoodScreen() {
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
+  const [currentPage, setCurrentPage] = useState(1);
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
   const [newOffering, setNewOffering] = useState({
     name: "",
@@ -23,6 +27,22 @@ export function FoodScreen() {
     servings: "",
     dietType: ""
   });
+
+  // Fetch ALL food data from Convex (we'll paginate client-side after filtering)
+  const { data: allFoods, loading: loadingFoods, error: foodError } = useConvexQuery('foods:getAll', { 
+    available: true 
+  });
+  
+  // Mutation for creating new food offering
+  const { mutate: createFood, loading: creatingFood } = useConvexMutation('foods:create');
+
+  const convexFoods = allFoods || [];
+  const pageSize = 6;
+
+  // Reset to page 1 when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeFilter]);
 
   const filters = [
     { name: "All", emoji: "🍽️", key: "all" },
@@ -35,148 +55,30 @@ export function FoodScreen() {
     { name: "Seafood", emoji: "🦐", key: "seafood" }
   ];
 
-  // Load food data from data.json
-  const foodRecommendations = [
-    {
-      id: "food_001",
-      name: "Hainanese Chicken Rice",
-      house: "Auntie Mei",
-      block: "Blk A-101",
-      tags: ["high protein", "no dairy", "comfort"],
-      diet: "halal-friendly",
-      allergens: ["soy"],
-      price: "$6.50",
-      eta: "20 min",
-      distance: "0.3 km",
-      rating: 4.8,
-      calories: "520 cal",
-      protein: "32g protein",
-      momMessage: "This one got high protein, good for you! Auntie Mei cook very nice.",
-      image: "🍗"
-    },
-    {
-      id: "food_002",
-      name: "Laksa with fishcake",
-      house: "Uncle Lim",
-      block: "Blk A-205",
-      tags: ["spicy", "seafood"],
-      diet: "",
-      allergens: ["seafood", "egg"],
-      price: "$7.20",
-      eta: "25 min",
-      distance: "0.4 km",
-      rating: 4.6,
-      calories: "680 cal",
-      protein: "24g protein",
-      momMessage: "Spicy one! Uncle Lim make the soup very shiok, you try.",
-      image: "🍜"
-    },
-    {
-      id: "food_003",
-      name: "Homemade Curry Chicken",
-      house: "Mrs Tan",
-      block: "Blk B-301",
-      tags: ["comfort", "spicy"],
-      diet: "",
-      allergens: ["dairy"],
-      price: "$8.00",
-      eta: "30 min",
-      distance: "0.5 km",
-      rating: 4.9,
-      calories: "720 cal",
-      protein: "28g protein",
-      momMessage: "Mrs Tan curry is the best! Very homemade taste, comfort food.",
-      image: "🍛"
-    },
-    {
-      id: "food_004",
-      name: "Tofu Basil Stir-Fry",
-      house: "Chef Jia",
-      block: "Blk B-108",
-      tags: ["vegetarian", "high protein"],
-      diet: "vegetarian",
-      allergens: ["soy"],
-      price: "$5.80",
-      eta: "18 min",
-      distance: "0.2 km",
-      rating: 4.7,
-      calories: "380 cal",
-      protein: "22g protein",
-      momMessage: "Healthy option! Chef Jia use fresh ingredients, very light.",
-      image: "🥗"
-    },
-    {
-      id: "food_005",
-      name: "Nasi Lemak with fried egg",
-      house: "Auntie Yati",
-      block: "Blk C-209",
-      tags: ["halal", "coconut"],
-      diet: "halal",
-      allergens: ["egg"],
-      price: "$6.00",
-      eta: "22 min",
-      distance: "0.6 km",
-      rating: 4.8,
-      calories: "590 cal",
-      protein: "18g protein",
-      momMessage: "Traditional taste! Auntie Yati's sambal is shiok, you won't regret.",
-      image: "🍚"
-    },
-    {
-      id: "food_006",
-      name: "Prawn Mee Soup",
-      house: "Mdm Liew",
-      block: "Blk C-501",
-      tags: ["seafood", "soup"],
-      diet: "",
-      allergens: ["seafood"],
-      price: "$7.50",
-      eta: "28 min",
-      distance: "0.7 km",
-      rating: 4.5,
-      calories: "480 cal",
-      protein: "26g protein",
-      momMessage: "Got fresh prawns today! Mdm Liew soup always tasty.",
-      image: "🍤"
-    },
-    {
-      id: "food_007",
-      name: "Paneer Butter Masala",
-      house: "Uncle Raj",
-      block: "Blk D-112",
-      tags: ["vegetarian", "spicy"],
-      diet: "vegetarian",
-      allergens: ["dairy", "nuts"],
-      price: "$7.80",
-      eta: "26 min",
-      distance: "0.5 km",
-      rating: 4.9,
-      calories: "620 cal",
-      protein: "20g protein",
-      momMessage: "Uncle Raj's Indian food always on point! Rich and creamy.",
-      image: "🧈"
-    },
-    {
-      id: "food_008",
-      name: "Char Kway Teow",
-      house: "Auntie Bee",
-      block: "Blk D-318",
-      tags: ["seafood", "egg", "wok hey"],
-      diet: "",
-      allergens: ["seafood", "egg"],
-      price: "$6.80",
-      eta: "24 min",
-      distance: "0.4 km",
-      rating: 4.7,
-      calories: "740 cal",
-      protein: "22g protein",
-      momMessage: "Wok hey power! Auntie Bee fry until very fragrant one.",
-      image: "🍝"
-    }
-  ];
+  // Transform Convex data to match expected format
+  const transformFoodData = (food) => ({
+    id: food.itemId || food._id,
+    name: food.dish,
+    house: food.house,
+    block: food.block,
+    tags: food.tags || [],
+    diet: Array.isArray(food.diet) ? food.diet.join(', ') : (food.diet || ''),
+    allergens: food.allergens || [],
+    price: food.price,
+    eta: food.eta || "30 min",
+    distance: food.distance || "0.5 km",
+    rating: food.rating || 5.0,
+    calories: food.calories || "500 cal",
+    protein: food.protein || "20g protein",
+    momMessage: food.description || `${food.house} always cook nice one! You try lah.`,
+    image: food.image || "🍽️"
+  });
+
+  // Use Convex data if available, otherwise show loading/empty state
+  const foodRecommendations = convexFoods ? convexFoods.map(transformFoodData) : [];
 
   // Filter food based on active filter
-  const filteredFoods = foodRecommendations.filter((food) => {
+  const allFilteredFoods = foodRecommendations.filter((food) => {
     if (activeFilter === "All") return true;
     
     const filterKey = activeFilter.toLowerCase();
@@ -214,6 +116,40 @@ export function FoodScreen() {
     return false;
   });
 
+  // Calculate pagination values based on filtered data
+  const totalFilteredItems = allFilteredFoods.length;
+  const totalPages = Math.ceil(totalFilteredItems / pageSize);
+  const startItem = totalFilteredItems > 0 ? (currentPage - 1) * pageSize + 1 : 0;
+  const endItem = Math.min(currentPage * pageSize, totalFilteredItems);
+
+  // Paginate the filtered results
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const filteredFoods = allFilteredFoods.slice(startIndex, endIndex);
+
+  // Calculate visible page numbers (max 5 pages)
+  const getVisiblePages = () => {
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    // Adjust startPage if we're near the end
+    if (endPage - startPage < maxVisiblePages - 1) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    // Add one more page after current if possible (per user request)
+    if (currentPage < totalPages && endPage < totalPages) {
+      endPage = Math.min(totalPages, endPage + 1);
+    }
+    
+    const pages = [];
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
+
   return (
     <div className="min-h-screen bg-[#0F0F0F] flex flex-col">
       {/* Header */}
@@ -229,16 +165,17 @@ export function FoodScreen() {
             <h2 className="text-white text-xl font-bold">Food Recommendations</h2>
             <p className="text-xs text-gray-400">Personalized by Mom AI</p>
           </div>
-          <Dialog open={isPostDialogOpen} onOpenChange={setIsPostDialogOpen}>
-            <DialogTrigger asChild>
-              <Button
-                size="sm"
-                className="bg-gradient-to-r from-[#FF6B35] to-[#FFB84D] text-white hover:opacity-90"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Offer
-              </Button>
-            </DialogTrigger>
+          <div className="flex items-center gap-2">
+            <Dialog open={isPostDialogOpen} onOpenChange={setIsPostDialogOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  size="sm"
+                  className="bg-gradient-to-r from-[#FF6B35] to-[#FFB84D] text-white hover:opacity-90"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Offer
+                </Button>
+              </DialogTrigger>
             <DialogContent className="bg-[#1A1A1A] border-[#FF6B35]/20 text-white max-w-sm">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
@@ -315,17 +252,67 @@ export function FoodScreen() {
                 </div>
                 <Button
                   className="w-full bg-gradient-to-r from-[#FF6B35] to-[#FFB84D] text-white hover:opacity-90"
-                  onClick={() => {
-                    // Handle posting
-                    setIsPostDialogOpen(false);
-                    setNewOffering({ name: "", description: "", price: "", servings: "", dietType: "" });
+                  disabled={creatingFood || !newOffering.name || !newOffering.price}
+                  onClick={async () => {
+                    if (!isAuthenticated) {
+                      alert("Please login to post an offering");
+                      navigate('/login');
+                      return;
+                    }
+
+                    // Generate unique ID
+                    const itemId = `food_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                    
+                    // Derive tags from dietType
+                    const tags = newOffering.dietType ? [newOffering.dietType.toLowerCase()] : [];
+                    const diet = newOffering.dietType ? [newOffering.dietType.toLowerCase()] : [];
+
+                    const result = await createFood({
+                      itemId,
+                      house: user?.fullName || user?.email || "Home Cook",
+                      block: user?.block || "Your Block",
+                      dish: newOffering.name,
+                      description: newOffering.description || `Delicious ${newOffering.name}`,
+                      tags,
+                      diet,
+                      allergens: [],
+                      price: newOffering.price.startsWith('$') ? newOffering.price : `$${newOffering.price}`,
+                      eta: "30 min",
+                      available: true,
+                      userId: user?.id,
+                    });
+
+                    if (result.success) {
+                      setIsPostDialogOpen(false);
+                      setNewOffering({ name: "", description: "", price: "", servings: "", dietType: "" });
+                      // Optionally show success message
+                      alert("Food offering posted successfully! 🎉");
+                      // Refresh the page to show new item
+                      window.location.reload();
+                    } else {
+                      alert("Failed to post offering. Please try again.");
+                    }
                   }}
                 >
-                  Post Offering
+                  {creatingFood ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Posting...
+                    </>
+                  ) : (
+                    "Post Offering"
+                  )}
                 </Button>
               </div>
             </DialogContent>
           </Dialog>
+          <button
+            onClick={() => navigate('/settings')}
+            className="text-white hover:text-[#FF6B35] transition-colors"
+          >
+            <Settings className="w-6 h-6" />
+          </button>
+          </div>
         </div>
       </div>
 
@@ -354,36 +341,86 @@ export function FoodScreen() {
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6">
         <div className="max-w-4xl mx-auto">
-          {/* Why Mom chose these */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-br from-[#1A1A1A] to-[#2D2D2D] rounded-2xl p-5 border border-[#FF6B35]/20 mb-6"
-          >
-            <div className="flex items-start gap-3">
-              <div className="text-2xl">💝</div>
-              <div className="flex-1">
-                <h3 className="text-white font-semibold mb-2 flex items-center gap-2">
-                  Why Mom chose these for you
-                </h3>
-                <p className="text-gray-300 text-sm leading-relaxed">
-                  Based on your preference for high protein and comfort food, I'm prioritizing nearby neighbors with fresh cooking today! All within walking distance. 👟
-                </p>
+          {/* Error Message */}
+          {foodError && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-red-500/10 border border-red-500/30 rounded-2xl p-5 mb-6"
+            >
+              <div className="flex items-start gap-3">
+                <div className="text-2xl">⚠️</div>
+                <div className="flex-1">
+                  <h3 className="text-white font-semibold mb-2">Aiyo! Something went wrong lah</h3>
+                  <p className="text-gray-300 text-sm">
+                    Cannot load food menu now. Check your connection and try again later, can?
+                  </p>
+                </div>
               </div>
+            </motion.div>
+          )}
+
+          {/* Why Mom chose these */}
+          {!foodError && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-gradient-to-br from-[#1A1A1A] to-[#2D2D2D] rounded-2xl p-5 border border-[#FF6B35]/20 mb-6"
+            >
+              <div className="flex items-start gap-3">
+                <div className="text-2xl">💝</div>
+                <div className="flex-1">
+                  <h3 className="text-white font-semibold mb-2 flex items-center gap-2">
+                    Why Mom chose these for you
+                  </h3>
+                  <p className="text-gray-300 text-sm leading-relaxed">
+                    Based on your preference for high protein and comfort food, I'm prioritizing nearby neighbors with fresh cooking today! All within walking distance. 👟
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Loading State */}
+          {loadingFoods && (
+            <div className="space-y-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-[#1A1A1A] rounded-3xl overflow-hidden border border-[#FF6B35]/20 animate-pulse">
+                  <div className="h-64 bg-[#2D2D2D]"></div>
+                  <div className="p-5 space-y-4">
+                    <div className="h-6 bg-[#2D2D2D] rounded w-3/4"></div>
+                    <div className="h-4 bg-[#2D2D2D] rounded w-1/2"></div>
+                    <div className="h-20 bg-[#2D2D2D] rounded"></div>
+                  </div>
+                </div>
+              ))}
             </div>
-          </motion.div>
+          )}
 
           {/* Results Count */}
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-gray-400 text-sm">
-              {filteredFoods.length} {filteredFoods.length === 1 ? 'dish' : 'dishes'} available
-              {activeFilter !== "All" && <span className="text-[#FF6B35] ml-1">• {activeFilter}</span>}
-            </p>
-          </div>
+          {!loadingFoods && !foodError && (
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-gray-400 text-sm">
+                {totalFilteredItems > 0 ? (
+                  <>
+                    Showing <span className="text-[#FF6B35] font-semibold">{startItem}-{endItem}</span> from <span className="text-white font-semibold">{totalFilteredItems}</span> {activeFilter !== "All" ? activeFilter.toLowerCase() : ''} {totalFilteredItems === 1 ? 'dish' : 'dishes'}
+                    {activeFilter !== "All" && <span className="text-[#FF6B35] ml-1">• {activeFilter}</span>}
+                  </>
+                ) : (
+                  <>
+                    No dishes found
+                    {activeFilter !== "All" && <span className="text-[#FF6B35] ml-1">• {activeFilter}</span>}
+                  </>
+                )}
+              </p>
+            </div>
+          )}
 
           {/* Food Cards - Large Visual Design */}
-          <div className="space-y-6">
-            {filteredFoods.length === 0 ? (
+          {!loadingFoods && !foodError && (
+            <>
+            <div className="space-y-6">
+              {filteredFoods.length === 0 ? (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -523,7 +560,51 @@ export function FoodScreen() {
               </motion.div>
               ))
             )}
-          </div>
+            </div>
+
+            {/* Pagination Controls */}
+            {filteredFoods.length > 0 && totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-8 mb-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="bg-[#2D2D2D] border-gray-700 text-white hover:bg-[#3D3D3D] disabled:opacity-50"
+                >
+                  Previous
+                </Button>
+                
+                <div className="flex gap-1">
+                  {getVisiblePages().map(page => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(page)}
+                      className={currentPage === page 
+                        ? "bg-gradient-to-r from-[#FF6B35] to-[#FFB84D] text-white" 
+                        : "bg-[#2D2D2D] border-gray-700 text-white hover:bg-[#3D3D3D]"
+                      }
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="bg-[#2D2D2D] border-gray-700 text-white hover:bg-[#3D3D3D] disabled:opacity-50"
+                >
+                  Next
+                </Button>
+              </div>
+            )}
+            </>
+          )}
         </div>
       </div>
 

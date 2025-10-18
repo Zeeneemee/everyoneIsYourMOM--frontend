@@ -1,103 +1,122 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import { useConvexQuery, useConvexMutation } from "../hooks/useConvexQuery";
 import { AIMomAvatar } from "./AIMomAvatar";
 import { BottomNav } from "./BottomNav";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
-import { ArrowLeft, Search, Heart, MessageCircle, MapPin, Clock, ChefHat, Home, Sparkles, Package } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { Label } from "./ui/label";
+import { Textarea } from "./ui/textarea";
+import { ArrowLeft, Search, Heart, MessageCircle, MapPin, Clock, ChefHat, Home, Sparkles, Package, Plus, Loader2, Settings } from "lucide-react";
 
 export function ExchangeScreen() {
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isListDialogOpen, setIsListDialogOpen] = useState(false);
+  const [newItem, setNewItem] = useState({
+    name: "",
+    description: "",
+    status: "donate",
+    condition: "good",
+    price: "",
+    category: ""
+  });
 
-  // Load exchange data from data.json
-  const exchangeItems = [
-    {
-      id: "item_01",
-      ownerBlock: "Blk A-304",
-      item: "Rice Cooker 1.2L",
-      status: "donate",
-      condition: "good",
-      image: "🍚"
-    },
-    {
-      id: "item_02",
-      ownerBlock: "Blk B-107",
-      item: "Standing Fan",
-      status: "exchange",
-      condition: "fair",
-      image: "🪭"
-    },
-    {
-      id: "item_03",
-      ownerBlock: "Blk C-502",
-      item: "Yoga Mat",
-      status: "donate",
-      condition: "like new",
-      image: "🧘"
-    },
-    {
-      id: "item_04",
-      ownerBlock: "Blk D-406",
-      item: "Microwave Oven",
-      status: "sell",
-      price: "$40",
-      condition: "good",
-      image: "📦"
-    },
-    {
-      id: "item_05",
-      ownerBlock: "Blk E-208",
-      item: "Mini Fridge",
-      status: "exchange",
-      condition: "good",
-      image: "🧊"
-    },
-    {
-      id: "item_06",
-      ownerBlock: "Blk F-105",
-      item: "Bookshelf (3-tier)",
-      status: "donate",
-      condition: "fair",
-      image: "📚"
-    },
-    {
-      id: "item_07",
-      ownerBlock: "Blk G-402",
-      item: "Electric Kettle",
-      status: "sell",
-      price: "$10",
-      condition: "good",
-      image: "☕"
-    },
-    {
-      id: "item_08",
-      ownerBlock: "Blk H-603",
-      item: "Desk Lamp",
-      status: "donate",
-      condition: "good",
-      image: "💡"
-    },
-    {
-      id: "item_09",
-      ownerBlock: "Blk I-310",
-      item: "Blender",
-      status: "exchange",
-      condition: "good",
-      image: "🫙"
-    },
-    {
-      id: "item_10",
-      ownerBlock: "Blk J-507",
-      item: "Foldable Chair",
-      status: "sell",
-      price: "$15",
-      condition: "good",
-      image: "🪑"
+  // Fetch ALL exchange items from Convex (we'll paginate client-side after filtering)
+  const { data: allItems, loading: loadingItems, error: itemsError } = useConvexQuery('exchange:getAll', { 
+    available: true 
+  });
+  
+  // Mutation for creating new exchange item
+  const { mutate: createItem, loading: creatingItem } = useConvexMutation('exchange:create');
+
+  const convexItems = allItems || [];
+  const pageSize = 12;
+
+  // Reset to page 1 when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeFilter]);
+
+  // Transform Convex data to match expected format
+  const transformItemData = (item) => ({
+    id: item.itemId || item._id,
+    ownerBlock: item.ownerBlock,
+    item: item.item,
+    status: item.status,
+    condition: item.condition,
+    price: item.price,
+    image: getItemEmoji(item.item)
+  });
+
+  // Helper function to get emoji based on item name
+  const getItemEmoji = (itemName) => {
+    const name = itemName.toLowerCase();
+    if (name.includes('rice') || name.includes('cooker')) return '🍚';
+    if (name.includes('fan')) return '🪭';
+    if (name.includes('yoga') || name.includes('mat')) return '🧘';
+    if (name.includes('microwave')) return '📦';
+    if (name.includes('fridge')) return '🧊';
+    if (name.includes('book')) return '📚';
+    if (name.includes('kettle') || name.includes('coffee')) return '☕';
+    if (name.includes('lamp')) return '💡';
+    if (name.includes('blender')) return '🫙';
+    if (name.includes('chair')) return '🪑';
+    return '📦';
+  };
+
+  // Use Convex data if available, otherwise show loading/empty state
+  const allExchangeItems = convexItems ? convexItems.map(transformItemData) : [];
+
+  // Filter exchange items based on active filter
+  const allFilteredItems = allExchangeItems.filter((item) => {
+    if (activeFilter === "all") return true;
+    if (activeFilter === "donate") return item.status.toLowerCase() === "donate";
+    if (activeFilter === "exchange") return item.status.toLowerCase() === "exchange";
+    if (activeFilter === "sell") return item.status.toLowerCase() === "sell";
+    return true;
+  });
+
+  // Calculate pagination values based on filtered data
+  const totalFilteredItems = allFilteredItems.length;
+  const totalPages = Math.ceil(totalFilteredItems / pageSize);
+  const startItem = totalFilteredItems > 0 ? (currentPage - 1) * pageSize + 1 : 0;
+  const endItem = Math.min(currentPage * pageSize, totalFilteredItems);
+
+  // Paginate the filtered results
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const exchangeItems = allFilteredItems.slice(startIndex, endIndex);
+
+  // Calculate visible page numbers (max 5 pages)
+  const getVisiblePages = () => {
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    // Adjust startPage if we're near the end
+    if (endPage - startPage < maxVisiblePages - 1) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
-  ];
+    
+    // Add one more page after current if possible (per user request)
+    if (currentPage < totalPages && endPage < totalPages) {
+      endPage = Math.min(totalPages, endPage + 1);
+    }
+    
+    const pages = [];
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
 
   return (
     <div className="min-h-screen bg-[#0F0F0F] flex flex-col">
@@ -116,6 +135,12 @@ export function ExchangeScreen() {
               <h2 className="text-white text-lg font-semibold">Exchange</h2>
             </div>
           </div>
+          <button
+            onClick={() => navigate('/settings')}
+            className="text-white hover:text-[#FF6B35] transition-colors"
+          >
+            <Settings className="w-6 h-6" />
+          </button>
         </div>
       </div>
 
@@ -132,32 +157,132 @@ export function ExchangeScreen() {
         </div>
       </div>
 
+      {/* Filter Tabs */}
+      <div className="px-4 sm:px-6 py-4 bg-[#0F0F0F]">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            {[
+              { name: "All", key: "all", emoji: "📦" },
+              { name: "Donate", key: "donate", emoji: "💝" },
+              { name: "Exchange", key: "exchange", emoji: "🔄" },
+              { name: "Sell", key: "sell", emoji: "💰" }
+            ].map((filter) => (
+              <Button
+                key={filter.key}
+                onClick={() => setActiveFilter(filter.key)}
+                className={`shrink-0 rounded-full h-10 px-5 font-medium transition-all ${
+                  activeFilter === filter.key
+                    ? 'bg-gradient-to-r from-[#FF6B35] to-[#FFB84D] text-white hover:opacity-90 border-none'
+                    : 'bg-[#2D2D2D] text-gray-300 hover:bg-[#3D3D3D] border-none'
+                }`}
+              >
+                <span className="text-base">{filter.emoji}</span>
+                <span className="ml-2">{filter.name}</span>
+              </Button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6">
         <div className="max-w-4xl mx-auto">
-          {/* Mom's Message */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-[#1A1A1A] rounded-xl p-4 border border-[#FF6B35]/20 mb-6"
-          >
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <p className="text-white text-sm mb-2">
-                  See lah, always need something. Lucky ah — your neighbors got things to donate, exchange, or sell cheap. I message them for you?
-                </p>
-                <div className="flex gap-2 flex-wrap">
-                  <Badge className="bg-[#FFB84D]/20 text-[#FFB84D] border-[#FFB84D]/30 text-xs">
-                    Matched to your interests
-                  </Badge>
+          {/* Error Message */}
+          {itemsError && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-6"
+            >
+              <div className="flex items-start gap-3">
+                <div className="text-2xl">⚠️</div>
+                <div className="flex-1">
+                  <h3 className="text-white font-semibold mb-2">Aiyo! Something wrong lah</h3>
+                  <p className="text-gray-300 text-sm">
+                    Cannot load exchange items now. Try again later, can?
+                  </p>
                 </div>
               </div>
+            </motion.div>
+          )}
+
+          {/* Loading State */}
+          {loadingItems && (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-[#1A1A1A] rounded-xl p-4 border border-[#FF6B35]/20 animate-pulse">
+                  <div className="flex gap-4">
+                    <div className="w-16 h-16 bg-[#2D2D2D] rounded-lg"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-5 bg-[#2D2D2D] rounded w-2/3"></div>
+                      <div className="h-4 bg-[#2D2D2D] rounded w-1/2"></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          </motion.div>
+          )}
+
+          {/* Results Count */}
+          {!loadingItems && !itemsError && (
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-gray-400 text-sm">
+                {totalFilteredItems > 0 ? (
+                  <>
+                    Showing <span className="text-[#FF6B35] font-semibold">{startItem}-{endItem}</span> from <span className="text-white font-semibold">{totalFilteredItems}</span> {activeFilter !== "all" ? activeFilter : ''} {totalFilteredItems === 1 ? 'item' : 'items'}
+                    {activeFilter !== "all" && <span className="text-[#FF6B35] ml-1">• {activeFilter.charAt(0).toUpperCase() + activeFilter.slice(1)}</span>}
+                  </>
+                ) : (
+                  <>
+                    No items found
+                    {activeFilter !== "all" && <span className="text-[#FF6B35] ml-1">• {activeFilter.charAt(0).toUpperCase() + activeFilter.slice(1)}</span>}
+                  </>
+                )}
+              </p>
+            </div>
+          )}
+
+          {/* Mom's Message */}
+          {!loadingItems && !itemsError && totalFilteredItems > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-[#1A1A1A] rounded-xl p-4 border border-[#FF6B35]/20 mb-6"
+            >
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <p className="text-white text-sm mb-2">
+                    See lah, always need something. Lucky ah — your neighbors got things to donate, exchange, or sell cheap. I message them for you?
+                  </p>
+                  <div className="flex gap-2 flex-wrap">
+                    <Badge className="bg-[#FFB84D]/20 text-[#FFB84D] border-[#FFB84D]/30 text-xs">
+                      Matched to your interests
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* No Items Message */}
+          {!loadingItems && !itemsError && exchangeItems.length === 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-[#1A1A1A] rounded-xl p-8 border border-[#FF6B35]/20 text-center"
+            >
+              <div className="text-6xl mb-4">📦</div>
+              <h3 className="text-white font-semibold text-lg mb-2">No items yet</h3>
+              <p className="text-gray-400 text-sm">
+                Be the first to list an item for exchange!
+              </p>
+            </motion.div>
+          )}
 
           {/* Exchange Item Cards */}
-          <div className="space-y-4">
-            {exchangeItems.map((item, index) => (
+          {!loadingItems && !itemsError && exchangeItems.length > 0 && (
+            <div className="space-y-4">
+              {exchangeItems.map((item, index) => (
               <motion.div
                 key={item.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -224,26 +349,207 @@ export function ExchangeScreen() {
                   </div>
                 </div>
               </motion.div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           {/* Add Item Button */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="mt-6"
-          >
-            <Button 
-              className="w-full h-12"
-              style={{
-                background: "linear-gradient(135deg, #FF6B35 0%, #FFB84D 100%)",
-              }}
+          {!loadingItems && !itemsError && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="mt-6"
             >
-              <Package className="w-5 h-5 mr-2" />
-              List Your Item
-            </Button>
-          </motion.div>
+              <Dialog open={isListDialogOpen} onOpenChange={setIsListDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    className="w-full h-12"
+                    style={{
+                      background: "linear-gradient(135deg, #FF6B35 0%, #FFB84D 100%)",
+                    }}
+                  >
+                    <Package className="w-5 h-5 mr-2" />
+                    List Your Item
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-[#1A1A1A] border-[#FF6B35]/20 text-white max-w-sm">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Package className="w-5 h-5 text-[#FF6B35]" />
+                      List Exchange Item
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="item-name" className="text-white">Item Name *</Label>
+                      <Input
+                        id="item-name"
+                        value={newItem.name}
+                        onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+                        placeholder="e.g., Rice Cooker"
+                        className="bg-[#2D2D2D] border-gray-700 text-white"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="item-description" className="text-white">Description</Label>
+                      <Textarea
+                        id="item-description"
+                        value={newItem.description}
+                        onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
+                        placeholder="Describe your item..."
+                        className="bg-[#2D2D2D] border-gray-700 text-white min-h-20"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label className="text-white">Status *</Label>
+                        <div className="space-y-1">
+                          {["donate", "exchange", "sell"].map((status) => (
+                            <Button
+                              key={status}
+                              variant={newItem.status === status ? "default" : "outline"}
+                              size="sm"
+                              type="button"
+                              className={newItem.status === status
+                                ? "w-full bg-gradient-to-r from-[#FF6B35] to-[#FFB84D] text-white border-none" 
+                                : "w-full bg-[#2D2D2D] border-gray-700 text-gray-300 hover:bg-[#3D3D3D]"}
+                              onClick={() => setNewItem({ ...newItem, status })}
+                            >
+                              {status.charAt(0).toUpperCase() + status.slice(1)}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-white">Condition *</Label>
+                        <div className="space-y-1">
+                          {["like new", "good", "fair"].map((cond) => (
+                            <Button
+                              key={cond}
+                              variant={newItem.condition === cond ? "default" : "outline"}
+                              size="sm"
+                              type="button"
+                              className={newItem.condition === cond
+                                ? "w-full bg-gradient-to-r from-[#FF6B35] to-[#FFB84D] text-white border-none text-xs" 
+                                : "w-full bg-[#2D2D2D] border-gray-700 text-gray-300 hover:bg-[#3D3D3D] text-xs"}
+                              onClick={() => setNewItem({ ...newItem, condition: cond })}
+                            >
+                              {cond.charAt(0).toUpperCase() + cond.slice(1)}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    {newItem.status === "sell" && (
+                      <div className="space-y-2">
+                        <Label htmlFor="item-price" className="text-white">Price</Label>
+                        <Input
+                          id="item-price"
+                          value={newItem.price}
+                          onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
+                          placeholder="$20"
+                          className="bg-[#2D2D2D] border-gray-700 text-white"
+                        />
+                      </div>
+                    )}
+                    <div className="bg-gradient-to-r from-[#FF6B35]/10 to-[#FFB84D]/10 rounded-lg p-3 border border-[#FF6B35]/30">
+                      <p className="text-xs text-gray-300">
+                        💝 Mom will help connect you with neighbors who need your item!
+                      </p>
+                    </div>
+                    <Button
+                      className="w-full bg-gradient-to-r from-[#FF6B35] to-[#FFB84D] text-white hover:opacity-90"
+                      disabled={creatingItem || !newItem.name}
+                      onClick={async () => {
+                        if (!isAuthenticated) {
+                          alert("Please login to list an item");
+                          navigate('/login');
+                          return;
+                        }
+
+                        const itemId = `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                        
+                        const result = await createItem({
+                          itemId,
+                          ownerBlock: user?.block || "Your Block",
+                          item: newItem.name,
+                          description: newItem.description || `${newItem.name} in ${newItem.condition} condition`,
+                          status: newItem.status,
+                          condition: newItem.condition,
+                          price: newItem.status === "sell" ? (newItem.price.startsWith('$') ? newItem.price : `$${newItem.price}`) : null,
+                          category: newItem.category,
+                          images: [],
+                          userId: user?.id,
+                          available: true,
+                        });
+
+                        if (result.success) {
+                          setIsListDialogOpen(false);
+                          setNewItem({ name: "", description: "", status: "donate", condition: "good", price: "", category: "" });
+                          alert("Item listed successfully! 🎉");
+                          window.location.reload();
+                        } else {
+                          alert("Failed to list item. Please try again.");
+                        }
+                      }}
+                    >
+                      {creatingItem ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Listing...
+                        </>
+                      ) : (
+                        "List Item"
+                      )}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </motion.div>
+          )}
+
+          {/* Pagination Controls */}
+          {!loadingItems && exchangeItems.length > 0 && totalPages > 1 && (
+            <div className="flex justify-center items-center gap-2 mt-8 mb-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="bg-[#2D2D2D] border-gray-700 text-white hover:bg-[#3D3D3D] disabled:opacity-50"
+              >
+                Previous
+              </Button>
+              
+              <div className="flex gap-1">
+                {getVisiblePages().map(page => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCurrentPage(page)}
+                    className={currentPage === page 
+                      ? "bg-gradient-to-r from-[#FF6B35] to-[#FFB84D] text-white" 
+                      : "bg-[#2D2D2D] border-gray-700 text-white hover:bg-[#3D3D3D]"
+                    }
+                  >
+                    {page}
+                  </Button>
+                ))}
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="bg-[#2D2D2D] border-gray-700 text-white hover:bg-[#3D3D3D] disabled:opacity-50"
+              >
+                Next
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 

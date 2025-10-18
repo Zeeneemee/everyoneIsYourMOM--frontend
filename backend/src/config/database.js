@@ -33,10 +33,9 @@ export const config = {
 
 // Validate required environment variables
 export const validateConfig = () => {
+  // Only CONVEX_URL is required for basic functionality
   const required = [
     'CONVEX_URL',
-    'GEMINI_API_KEY',
-    'ELEVENLABS_API_KEY',
   ];
   
   const missing = required.filter(key => !process.env[key]);
@@ -44,8 +43,19 @@ export const validateConfig = () => {
   if (missing.length > 0) {
     throw new Error(
       `Missing required environment variables: ${missing.join(', ')}\n` +
-      'Please copy .env.example to .env and fill in the values.'
+      'Please add CONVEX_URL to your .env file.'
     );
+  }
+  
+  // Warn about optional features
+  if (!process.env.GEMINI_API_KEY) {
+    console.warn('⚠️  GEMINI_API_KEY not set. AI agent features will be disabled.');
+  }
+  if (!process.env.ELEVENLABS_API_KEY) {
+    console.warn('⚠️  ELEVENLABS_API_KEY not set. Text-to-speech will be disabled.');
+  }
+  if (!process.env.OPENAI_API_KEY) {
+    console.warn('⚠️  OPENAI_API_KEY not set. Speech-to-text will be disabled.');
   }
 };
 

@@ -12,3 +12,5 @@ coverage/
 uploads/
 temp/
 
+
+.env.local

@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import { useConvexQuery, useConvexMutation } from "../hooks/useConvexQuery";
 import { AIMomAvatar } from "./AIMomAvatar";
 import { BottomNav } from "./BottomNav";
 import { Button } from "./ui/button";
@@ -9,11 +11,13 @@ import { Badge } from "./ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
-import { ArrowLeft, Search, Star, MapPin, Calendar, Users, ChefHat, Home, Sparkles, Package, MessageCircle, Clock, Plus, User } from "lucide-react";
+import { ArrowLeft, Search, Star, MapPin, Calendar, Users, ChefHat, Home, Sparkles, Package, MessageCircle, Clock, Plus, User, Loader2, Settings } from "lucide-react";
 
 export function CleaningScreen() {
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   const [selectedFilter, setSelectedFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
   const [isOfferDialogOpen, setIsOfferDialogOpen] = useState(false);
   const [newOffering, setNewOffering] = useState({
     name: "",
@@ -22,6 +26,22 @@ export function CleaningScreen() {
     availability: "",
     serviceTypes: []
   });
+
+  // Fetch ALL cleaning slots from Convex (we'll paginate client-side after filtering)
+  const { data: allSlots, loading: loadingSlots, error: slotsError } = useConvexQuery('cleaning:getAllSlots', { 
+    available: true 
+  });
+  
+  // Mutation for creating new cleaning service
+  const { mutate: createSlot, loading: creatingSlot } = useConvexMutation('cleaning:createSlot');
+
+  const convexSlots = allSlots || [];
+  const pageSize = 12;
+
+  // Reset to page 1 when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedFilter]);
 
   // Toggle service type selection
   const toggleServiceType = (type) => {
@@ -33,102 +53,29 @@ export function CleaningScreen() {
     }));
   };
 
-  // Load cleaning data from data.json
-  const allCleaningServices = [
-    {
-      id: "clean_01",
-      name: "Sarah Johnson",
-      experience: "8 years experience",
-      rating: 4.9,
-      reviews: 156,
-      price: 35,
-      distance: "0.5 km away",
-      replyTime: "< 5 min",
-      availability: "Available today",
-      services: ["Deep Cleaning", "Regular Cleaning", "Move-in/out"],
-      highlight: "Top-rated in your area with excellent deep cleaning reviews!",
-      image: "👩‍🦰",
-      verified: true
-    },
-    {
-      id: "clean_02",
-      name: "Maria Garcia",
-      experience: "10 years experience",
-      rating: 4.8,
-      reviews: 203,
-      price: 40,
-      distance: "1.2 km away",
-      replyTime: "< 10 min",
-      availability: "Tomorrow 9 AM",
-      services: ["Deep Cleaning", "Office Cleaning", "Eco-friendly"],
-      highlight: "Eco-friendly specialist - perfect for your green lifestyle!",
-      image: "👩‍🔧",
-      verified: true
-    },
-    {
-      id: "clean_03",
-      name: "Auntie Siew",
-      experience: "15 years experience",
-      rating: 4.9,
-      reviews: 312,
-      price: 30,
-      distance: "0.8 km away",
-      replyTime: "< 15 min",
-      availability: "Available today",
-      services: ["Regular Cleaning", "Pet-friendly", "Ironing"],
-      highlight: "Pet-friendly expert - your furry friends will love her!",
-      image: "👵",
-      verified: true
-    },
-    {
-      id: "clean_04",
-      name: "Jenny Tan",
-      experience: "6 years experience",
-      rating: 4.7,
-      reviews: 89,
-      price: 32,
-      distance: "1.5 km away",
-      replyTime: "< 20 min",
-      availability: "Tomorrow 2 PM",
-      services: ["Deep Cleaning", "Regular Cleaning", "Windows"],
-      highlight: "Window cleaning specialist - crystal clear results!",
-      image: "👩",
-      verified: true
-    },
-    {
-      id: "clean_05",
-      name: "Lily Wong",
-      experience: "5 years experience",
-      rating: 4.6,
-      reviews: 67,
-      price: 28,
-      distance: "2.0 km away",
-      replyTime: "< 30 min",
-      availability: "Available today",
-      services: ["Regular Cleaning", "Laundry", "Organization"],
-      highlight: "Organization expert - she'll make your home sparkle!",
-      image: "👩‍🦱",
-      verified: true
-    },
-    {
-      id: "clean_06",
-      name: "Uncle Raj",
-      experience: "12 years experience",
-      rating: 4.8,
-      reviews: 145,
-      price: 38,
-      distance: "1.0 km away",
-      replyTime: "< 15 min",
-      availability: "Tomorrow 10 AM",
-      services: ["Deep Cleaning", "Post-renovation", "Commercial"],
-      highlight: "Post-renovation specialist - tackles the toughest jobs!",
-      image: "👨‍🔧",
-      verified: true
-    }
-  ];
+  // Transform Convex data to match expected format
+  const transformSlotData = (slot) => ({
+    id: slot.slotId || slot._id,
+    name: slot.availableCleaner,
+    experience: `${slot.duration || 2} hours available`,
+    rating: 4.8,
+    reviews: 100,
+    price: parseInt(slot.price.replace(/[^0-9]/g, '')) || 30,
+    distance: "1.0 km away",
+    replyTime: "< 15 min",
+    availability: slot.time || "Available today",
+    services: slot.petFriendly ? ["Regular Cleaning", "Pet-friendly"] : ["Regular Cleaning"],
+    highlight: slot.description || `${slot.availableCleaner} is experienced and reliable!`,
+    image: "👨‍🔧",
+    verified: true,
+    petFriendly: slot.petFriendly
+  });
+
+  // Use Convex data if available, otherwise show loading/empty state
+  const allCleaningServices = convexSlots ? convexSlots.map(transformSlotData) : [];
 
   // Filter cleaning services based on selected filter
-  const cleaningServices = allCleaningServices.filter((service) => {
+  const allFilteredServices = allCleaningServices.filter((service) => {
     if (selectedFilter === "all") return true;
     if (selectedFilter === "deep") {
       return service.services.some(s => s.toLowerCase().includes("deep"));
@@ -136,8 +83,45 @@ export function CleaningScreen() {
     if (selectedFilter === "regular") {
       return service.services.some(s => s.toLowerCase().includes("regular"));
     }
+    if (selectedFilter === "pet-friendly") {
+      return service.petFriendly === true;
+    }
     return true;
   });
+
+  // Calculate pagination values based on filtered data
+  const totalFilteredItems = allFilteredServices.length;
+  const totalPages = Math.ceil(totalFilteredItems / pageSize);
+  const startItem = totalFilteredItems > 0 ? (currentPage - 1) * pageSize + 1 : 0;
+  const endItem = Math.min(currentPage * pageSize, totalFilteredItems);
+
+  // Paginate the filtered results
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const cleaningServices = allFilteredServices.slice(startIndex, endIndex);
+
+  // Calculate visible page numbers (max 5 pages)
+  const getVisiblePages = () => {
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    // Adjust startPage if we're near the end
+    if (endPage - startPage < maxVisiblePages - 1) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    // Add one more page after current if possible (per user request)
+    if (currentPage < totalPages && endPage < totalPages) {
+      endPage = Math.min(totalPages, endPage + 1);
+    }
+    
+    const pages = [];
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
 
   return (
     <div className="min-h-screen bg-[#0F0F0F] flex flex-col">
@@ -242,18 +226,56 @@ export function CleaningScreen() {
                   </div>
                   <Button
                     className="w-full bg-gradient-to-r from-[#FF6B35] to-[#FFB84D] text-white hover:opacity-90"
-                    onClick={() => {
-                      // Handle posting
-                      setIsOfferDialogOpen(false);
-                      setNewOffering({ name: "", description: "", price: "", availability: "", serviceTypes: [] });
+                    disabled={creatingSlot || !newOffering.name || !newOffering.price}
+                    onClick={async () => {
+                      if (!isAuthenticated) {
+                        alert("Please login to post a service");
+                        navigate('/login');
+                        return;
+                      }
+
+                      // Generate unique ID
+                      const slotId = `clean_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                      
+                      const result = await createSlot({
+                        slotId,
+                        time: newOffering.availability || "Flexible",
+                        availableCleaner: newOffering.name,
+                        petFriendly: newOffering.serviceTypes.includes("Pet-friendly"),
+                        price: newOffering.price.includes('/hr') ? newOffering.price : `$${newOffering.price}/hr`,
+                        duration: 2,
+                        description: newOffering.description || `Professional cleaning service by ${newOffering.name}`,
+                        available: true,
+                      });
+
+                      if (result.success) {
+                        setIsOfferDialogOpen(false);
+                        setNewOffering({ name: "", description: "", price: "", availability: "", serviceTypes: [] });
+                        alert("Cleaning service posted successfully! 🎉");
+                        window.location.reload();
+                      } else {
+                        alert("Failed to post service. Please try again.");
+                      }
                     }}
                   >
-                    Post Service
+                    {creatingSlot ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Posting...
+                      </>
+                    ) : (
+                      "Post Service"
+                    )}
                   </Button>
                 </div>
               </DialogContent>
             </Dialog>
-            
+            <button
+              onClick={() => navigate('/settings')}
+              className="text-white hover:text-[#FF6B35] transition-colors"
+            >
+              <Settings className="w-6 h-6" />
+            </button>
           </div>
         </div>
       </div>
@@ -300,7 +322,17 @@ export function CleaningScreen() {
             animate={{ opacity: 1, y: 0 }}
             className="text-gray-400 text-sm mt-2"
           >
-            {cleaningServices.length} cleaner{cleaningServices.length !== 1 ? 's' : ''} available
+            {totalFilteredItems > 0 ? (
+              <>
+                Showing <span className="text-[#FF6B35] font-semibold">{startItem}-{endItem}</span> from <span className="text-white font-semibold">{totalFilteredItems}</span> {selectedFilter !== "all" ? selectedFilter : ''} {totalFilteredItems === 1 ? 'cleaner' : 'cleaners'}
+                {selectedFilter !== "all" && <span className="text-[#FF6B35] ml-1">• {selectedFilter.charAt(0).toUpperCase() + selectedFilter.slice(1)}</span>}
+              </>
+            ) : (
+              <>
+                No cleaners found
+                {selectedFilter !== "all" && <span className="text-[#FF6B35] ml-1">• {selectedFilter.charAt(0).toUpperCase() + selectedFilter.slice(1)}</span>}
+              </>
+            )}
           </motion.p>
         </div>
       </div>
@@ -308,8 +340,45 @@ export function CleaningScreen() {
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6">
         <div className="max-w-4xl mx-auto space-y-4">
+          {/* Error Message */}
+          {slotsError && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-red-500/10 border border-red-500/30 rounded-2xl p-5"
+            >
+              <div className="flex items-start gap-3">
+                <div className="text-2xl">⚠️</div>
+                <div className="flex-1">
+                  <h3 className="text-white font-semibold mb-2">Aiyo! Cannot load cleaners lah</h3>
+                  <p className="text-gray-300 text-sm">
+                    Something went wrong. Check your connection and try again, can?
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Loading State */}
+          {loadingSlots && (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-[#1A1A1A] rounded-2xl p-5 border border-[#FF6B35]/20 animate-pulse">
+                  <div className="flex gap-4 mb-4">
+                    <div className="w-16 h-16 rounded-full bg-[#2D2D2D]"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-6 bg-[#2D2D2D] rounded w-1/2"></div>
+                      <div className="h-4 bg-[#2D2D2D] rounded w-1/3"></div>
+                    </div>
+                  </div>
+                  <div className="h-20 bg-[#2D2D2D] rounded"></div>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Quick Booking Suggestion - Only show for "all" or "deep" filters */}
-          {(selectedFilter === "all" || selectedFilter === "deep") && (
+          {!loadingSlots && !slotsError && (selectedFilter === "all" || selectedFilter === "deep") && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -332,7 +401,7 @@ export function CleaningScreen() {
           )}
 
           {/* No Results Message */}
-          {cleaningServices.length === 0 && (
+          {!loadingSlots && !slotsError && cleaningServices.length === 0 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -347,7 +416,7 @@ export function CleaningScreen() {
           )}
 
           {/* Cleaning Service Cards */}
-          {cleaningServices.map((service, index) => (
+          {!loadingSlots && !slotsError && cleaningServices.map((service, index) => (
             <motion.div
               key={`${selectedFilter}-${service.id}`}
               initial={{ opacity: 0, y: 20 }}
@@ -447,6 +516,48 @@ export function CleaningScreen() {
             </motion.div>
           ))}
         </div>
+
+        {/* Pagination Controls */}
+        {!loadingSlots && cleaningServices.length > 0 && totalPages > 1 && (
+          <div className="flex justify-center items-center gap-2 mt-8 mb-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="bg-[#2D2D2D] border-gray-700 text-white hover:bg-[#3D3D3D] disabled:opacity-50"
+            >
+              Previous
+            </Button>
+            
+            <div className="flex gap-1">
+              {getVisiblePages().map(page => (
+                <Button
+                  key={page}
+                  variant={currentPage === page ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCurrentPage(page)}
+                  className={currentPage === page 
+                    ? "bg-gradient-to-r from-[#FF6B35] to-[#FFB84D] text-white" 
+                    : "bg-[#2D2D2D] border-gray-700 text-white hover:bg-[#3D3D3D]"
+                  }
+                >
+                  {page}
+                </Button>
+              ))}
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="bg-[#2D2D2D] border-gray-700 text-white hover:bg-[#3D3D3D] disabled:opacity-50"
+            >
+              Next
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Bottom Navigation */}

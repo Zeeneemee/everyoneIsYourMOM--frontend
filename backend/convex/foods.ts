@@ -21,6 +21,39 @@ export const getAll = query({
   },
 });
 
+// Get paginated food items (12 per page)
+export const getPaginated = query({
+  args: {
+    page: v.number(),
+    pageSize: v.optional(v.number()),
+    available: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const pageSize = args.pageSize || 12;
+    const offset = (args.page - 1) * pageSize;
+    
+    let q = ctx.db.query("foodMenu");
+    
+    if (args.available !== undefined) {
+      q = q.withIndex("by_available", (q) => q.eq("available", args.available));
+    }
+    
+    const allItems = await q.collect();
+    const total = allItems.length;
+    const items = allItems.slice(offset, offset + pageSize);
+    const totalPages = Math.ceil(total / pageSize);
+    
+    return {
+      items,
+      page: args.page,
+      pageSize,
+      total,
+      totalPages,
+      hasMore: args.page < totalPages,
+    };
+  },
+});
+
 // Get food by ID
 export const getById = query({
   args: { id: v.id("foodMenu") },
@@ -159,6 +192,17 @@ export const create = mutation({
     userId: v.optional(v.id("users")),
   },
   handler: async (ctx, args) => {
+    // Check if item already exists
+    const existing = await ctx.db
+      .query("foodMenu")
+      .withIndex("by_item_id", (q) => q.eq("itemId", args.itemId))
+      .first();
+    
+    if (existing) {
+      console.log(`Food item ${args.itemId} already exists, skipping...`);
+      return existing._id;
+    }
+    
     return await ctx.db.insert("foodMenu", {
       ...args,
       rating: args.rating || 5.0,
