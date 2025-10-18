@@ -7,9 +7,141 @@ import { useConversation } from "@elevenlabs/react";
 export function VoiceAssistantModal() {
   const { isOpen, openVoiceAssistant, closeVoiceAssistant, handleNavigation, updateRecommendations, clearRecommendations, sharedRecommendations } = useVoiceAssistant();
   const recommendations = sharedRecommendations;
+  const [selectedIndex, setSelectedIndex] = useState(null);
 
   // Get agent ID from environment variable
   const agentId = import.meta.env.VITE_ELEVENLABS_AGENT_ID;
+
+  // Function to parse voice selection commands (by number or name)
+  const parseSelectionCommand = (messageText) => {
+    if (!messageText || typeof messageText !== 'string') return null;
+    
+    const textLower = messageText.toLowerCase();
+    console.log("🎯 Parsing selection from:", textLower);
+    
+    // Check if this is a selection command
+    const selectionKeywords = ['choose', 'select', 'want', 'pick', 'take', 'go with', 'book', 'order', 'get', 'i\'ll', 'give me', 'show me'];
+    const hasSelectionKeyword = selectionKeywords.some(keyword => textLower.includes(keyword));
+    
+    console.log("Has selection keyword:", hasSelectionKeyword);
+    
+    // PRIORITY 1: Parse ordinal numbers (first, second, third)
+    if (textLower.includes('first') || textLower.includes('1st')) {
+      console.log("✅ Found 'first' - returning index 0");
+      return { type: 'index', value: 0 };
+    }
+    if (textLower.includes('second') || textLower.includes('2nd')) {
+      console.log("✅ Found 'second' - returning index 1");
+      return { type: 'index', value: 1 };
+    }
+    if (textLower.includes('third') || textLower.includes('3rd')) {
+      console.log("✅ Found 'third' - returning index 2");
+      return { type: 'index', value: 2 };
+    }
+    
+    // PRIORITY 2: Parse cardinal numbers (one, two, three)
+    if ((textLower.includes('number one') || textLower.includes('number 1')) || 
+        (hasSelectionKeyword && textLower.match(/\bone\b/))) {
+      console.log("✅ Found 'one' - returning index 0");
+      return { type: 'index', value: 0 };
+    }
+    if ((textLower.includes('number two') || textLower.includes('number 2')) || 
+        (hasSelectionKeyword && textLower.match(/\btwo\b/))) {
+      console.log("✅ Found 'two' - returning index 1");
+      return { type: 'index', value: 1 };
+    }
+    if ((textLower.includes('number three') || textLower.includes('number 3')) || 
+        (hasSelectionKeyword && textLower.match(/\bthree\b/))) {
+      console.log("✅ Found 'three' - returning index 2");
+      return { type: 'index', value: 2 };
+    }
+    
+    // PRIORITY 3: Check for simple digits with selection keywords
+    if (hasSelectionKeyword) {
+      const digitMatch = textLower.match(/[^0-9]([123])[^0-9]/) || textLower.match(/([123])$/);
+      if (digitMatch) {
+        const digit = parseInt(digitMatch[1]);
+        console.log("✅ Found digit match:", digit, "- returning index", digit - 1);
+        return { type: 'index', value: digit - 1 };
+      }
+    }
+    
+    // PRIORITY 4: Check for "top one", "top option"
+    if ((textLower.includes('top') || textLower.includes('best')) && 
+        (textLower.includes('one') || textLower.includes('option') || textLower.includes('choice'))) {
+      console.log("✅ Found 'top/best' - returning index 0");
+      return { type: 'index', value: 0 };
+    }
+    
+    // PRIORITY 5: Check for food name match (if selection keyword exists)
+    if (hasSelectionKeyword && recommendations.length > 0) {
+      console.log("🔍 Searching for food name match in recommendations...");
+      
+      for (let i = 0; i < recommendations.length; i++) {
+        const food = recommendations[i];
+        const foodName = (food.name || food.dish || '').toLowerCase();
+        
+        // Check if the food name is mentioned in the message
+        if (foodName && textLower.includes(foodName)) {
+          console.log(`✅ Found food name match: "${foodName}" at index ${i}`);
+          return { type: 'index', value: i };
+        }
+        
+        // Check for partial matches (e.g., "chicken" matches "Hainanese Chicken Rice")
+        const foodWords = foodName.split(' ');
+        let matchCount = 0;
+        for (const word of foodWords) {
+          if (word.length > 3 && textLower.includes(word)) {
+            matchCount++;
+          }
+        }
+        
+        // If multiple words match, it's likely this food
+        if (matchCount >= 2) {
+          console.log(`✅ Found partial match: "${foodName}" at index ${i} (${matchCount} words matched)`);
+          return { type: 'index', value: i };
+        }
+      }
+      
+      console.log("❌ No food name match found");
+    }
+    
+    console.log("❌ No selection pattern matched");
+    return null;
+  };
+
+  // Function to handle voice selection and navigate to detail
+  const handleVoiceSelection = (selectionIndex) => {
+    if (selectionIndex === null || selectionIndex < 0 || selectionIndex >= recommendations.length) {
+      console.log("❌ Invalid selection index:", selectionIndex);
+      return;
+    }
+    
+    const selectedItem = recommendations[selectionIndex];
+    console.log('🎉 Voice selection confirmed:', { 
+      index: selectionIndex, 
+      item: selectedItem 
+    });
+    
+    // Show visual feedback
+    setSelectedIndex(selectionIndex);
+    
+    // Navigate after brief delay for visual feedback
+    setTimeout(() => {
+      // Navigate directly to the specific food item's detail page
+      const itemId = selectedItem.id || selectedItem._id;
+      const detailRoute = `/food/${itemId}`;
+      
+      console.log('🚀 Navigating to food detail:', detailRoute);
+      handleNavigation(detailRoute);
+      
+      // Close modal after navigation
+      setTimeout(() => {
+        closeVoiceAssistant();
+        setSelectedIndex(null);
+      }, 300);
+    }, 400);
+  };
 
   // Function to extract food names from Mom's speech and fetch matching items
   const parseAndFetchFoodMentions = async (messageText) => {
@@ -99,7 +231,18 @@ export function VoiceAssistantModal() {
         return;
       }
       
-      // Parse Mom's speech for food mentions (when she talks about specific dishes)
+      // PRIORITY 1: Check if user is making a selection (when recommendations are showing)
+      if (messageText && recommendations.length > 0) {
+        console.log("📋 Checking for selection command (", recommendations.length, "items available)");
+        const selectionResult = parseSelectionCommand(messageText);
+        if (selectionResult !== null) {
+          console.log(`🎯 Selection detected! Type: ${selectionResult.type}, Index: ${selectionResult.value}`);
+          handleVoiceSelection(selectionResult.value);
+          return; // Stop processing to avoid conflicts
+        }
+      }
+      
+      // PRIORITY 2: Parse Mom's speech for food mentions (when she talks about specific dishes)
       if (message.source === 'ai' && messageText) {
         parseAndFetchFoodMentions(messageText);
       }
@@ -339,22 +482,31 @@ export function VoiceAssistantModal() {
                     <p className="text-center text-white text-sm mb-2">
                       🍽️ Mom's Recommendations for You:
                     </p>
-                    {recommendations.map((food, index) => (
+                     {recommendations.map((food, index) => (
                       <motion.button
                         key={food.id || index}
                         initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
+                        animate={{ 
+                          opacity: 1, 
+                          x: 0,
+                          scale: selectedIndex === index ? 1.05 : 1
+                        }}
                         transition={{ delay: index * 0.1 }}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => {
-                          // Navigate to food page with the selected item
-                          handleNavigation('/food');
-                          // Store selected food in sessionStorage for the food page to show
-                          sessionStorage.setItem('selectedFood', JSON.stringify(food));
+                          // Navigate directly to the specific food item's detail page
+                          const itemId = food.id || food._id;
+                          const detailRoute = `/food/${itemId}`;
+                          console.log('🍽️ Card clicked - navigating to:', detailRoute);
+                          handleNavigation(detailRoute);
                           closeVoiceAssistant();
                         }}
-                        className="w-full bg-gradient-to-r from-[#2D2D2D] to-[#1A1A1A] border border-[#FF6B35]/30 rounded-xl p-4 text-left hover:border-[#FF6B35]/60 transition-all group"
+                        className={`w-full bg-gradient-to-r from-[#2D2D2D] to-[#1A1A1A] border rounded-xl p-4 text-left transition-all group ${
+                          selectedIndex === index 
+                            ? 'border-green-500 shadow-lg shadow-green-500/30 ring-2 ring-green-500/50' 
+                            : 'border-[#FF6B35]/30 hover:border-[#FF6B35]/60'
+                        }`}
                       >
                         <div className="flex items-start gap-3">
                           <div className="w-10 h-10 bg-gradient-to-br from-[#FF6B35] to-[#FFB84D] rounded-lg flex items-center justify-center text-2xl shrink-0">
@@ -380,12 +532,18 @@ export function VoiceAssistantModal() {
                               </span>
                             </div>
                           </div>
-                          <ShoppingCart className="w-5 h-5 text-[#FF6B35] opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                            {selectedIndex === index ? (
+                              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shrink-0 animate-pulse">
+                                <span className="text-white text-xl">✓</span>
+                              </div>
+                            ) : (
+                              <ShoppingCart className="w-5 h-5 text-[#FF6B35] opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                            )}
                         </div>
                       </motion.button>
                     ))}
-                    <p className="text-center text-xs text-gray-500 mt-3">
-                      Tap any dish to see details and order
+                     <p className="text-center text-xs text-gray-500 mt-3">
+                      💬 Say "I want chicken rice" or "the first one" or tap any dish
                     </p>
                   </motion.div>
                 )}
@@ -409,10 +567,10 @@ export function VoiceAssistantModal() {
                         "What should I eat?"
                       </span>
                       <span className="px-3 py-1 bg-[#FF6B35]/10 border border-[#FF6B35]/30 rounded-full text-xs text-[#FF6B35]">
-                        "Find halal food"
+                        "I want chicken rice"
                       </span>
                       <span className="px-3 py-1 bg-[#FF6B35]/10 border border-[#FF6B35]/30 rounded-full text-xs text-[#FF6B35]">
-                        "Book a cleaner"
+                        "Show me the laksa"
                       </span>
                     </div>
                     {/* Test button to show sample recommendations */}

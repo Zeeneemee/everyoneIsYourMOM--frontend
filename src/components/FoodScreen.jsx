@@ -107,7 +107,10 @@ export function FoodScreen() {
     calories: food.calories || "500 cal",
     protein: food.protein || "20g protein",
     momMessage: food.description || `${food.house} always cook nice one! You try lah.`,
-    image: food.image ? food.image.replace(/['"]/g, '') : null
+    image: food.image ? food.image.replace(/['"]/g, '') : null,
+    available: food.available !== false, // Default to true if not specified
+    description: food.description || '',
+    _creationTime: food._creationTime
   });
 
   // Use Convex data if available, otherwise show loading/empty state
@@ -476,7 +479,8 @@ export function FoodScreen() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="bg-[#1A1A1A] rounded-3xl overflow-hidden border border-[#FF6B35]/20 hover:border-[#FF6B35]/50 transition-all"
+                onClick={() => navigate(`/food/${food.id}`, { state: { food } })}
+                className="bg-[#1A1A1A] rounded-3xl overflow-hidden border border-[#FF6B35]/20 hover:border-[#FF6B35]/50 transition-all cursor-pointer"
               >
                 {/* Food Image with overlay */}
                 <div className="relative h-56 sm:h-64 bg-gradient-to-br from-[#2D2D2D] to-[#1A1A1A] flex items-center justify-center overflow-hidden">
@@ -496,7 +500,7 @@ export function FoodScreen() {
                   )}
                   
                   {/* Top overlay badges */}
-                  <div className="absolute top-4 left-4 flex gap-2">
+                  <div className="absolute top-4 left-4 flex gap-2 flex-wrap">
                     <Badge className="bg-black/60 backdrop-blur-sm text-white border-none">
                       <Star className="w-3 h-3 mr-1 fill-yellow-500 text-yellow-500" />
                       {food.rating}
@@ -506,10 +510,22 @@ export function FoodScreen() {
                         {food.diet}
                       </Badge>
                     )}
+                    {food.available ? (
+                      <Badge className="bg-green-600/80 backdrop-blur-sm text-white border-none">
+                        ✓ Available
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-red-600/80 backdrop-blur-sm text-white border-none">
+                        ✗ Unavailable
+                      </Badge>
+                    )}
                   </div>
 
                   {/* Heart icon */}
-                  <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 transition-colors">
+                  <button 
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 transition-colors"
+                  >
                     <Heart className="w-5 h-5 text-white" />
                   </button>
                 </div>
@@ -579,16 +595,33 @@ export function FoodScreen() {
                   {/* Action Buttons */}
                   <div className="flex gap-2">
                     <Button 
-                      onClick={() => handleOpenDetail(food)}
-                      className="flex-1 h-11 text-base font-semibold"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (food.available) {
+                          handleOpenDetail(food);
+                        } else {
+                          alert('Sorry, this item is not available right now.');
+                        }
+                      }}
+                      disabled={!food.available}
+                      className={`flex-1 h-11 text-base font-semibold ${
+                        food.available 
+                          ? '' 
+                          : 'opacity-50 cursor-not-allowed'
+                      }`}
                       style={{
-                        background: "linear-gradient(135deg, #FF6B35 0%, #FFB84D 100%)",
+                        background: food.available 
+                          ? "linear-gradient(135deg, #FF6B35 0%, #FFB84D 100%)"
+                          : "#6B7280",
                       }}
                     >
-                      Order Now
+                      {food.available ? 'Order Now' : 'Not Available'}
                     </Button>
                     <Button 
-                      onClick={() => handleOpenDetail(food)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/food/${food.id}`, { state: { food } });
+                      }}
                       variant="outline"
                       className="h-11 px-4 bg-[#2D2D2D] border-gray-700 text-white hover:bg-[#3D3D3D]"
                     >
@@ -597,6 +630,7 @@ export function FoodScreen() {
                     <Button 
                       variant="outline"
                       size="icon"
+                      onClick={(e) => e.stopPropagation()}
                       className="h-11 w-11 bg-[#2D2D2D] border-gray-700 text-white hover:bg-[#3D3D3D]"
                     >
                       <MessageCircle className="w-5 h-5" />

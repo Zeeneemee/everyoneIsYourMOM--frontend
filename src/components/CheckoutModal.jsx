@@ -8,6 +8,13 @@ export function CheckoutModal({ food, onClose, onPaymentSuccess }) {
   const [processing, setProcessing] = useState(false);
 
   const handleConfirmPayment = async () => {
+    // Safety check for availability
+    if (!food.available) {
+      alert('Sorry, this item is no longer available.');
+      onClose();
+      return;
+    }
+
     setProcessing(true);
     
     // Simulate payment processing
@@ -18,6 +25,11 @@ export function CheckoutModal({ food, onClose, onPaymentSuccess }) {
   };
 
   if (!food) return null;
+  
+  // Double check availability
+  if (!food.available) {
+    return null;
+  }
 
   return (
     <motion.div

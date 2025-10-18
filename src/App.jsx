@@ -7,6 +7,7 @@ import { VoiceAssistantModal } from './components/VoiceAssistantModal'
 import { SplashScreen } from './components/SplashScreen'
 import { HomeScreen } from './components/HomeScreen'
 import { FoodScreen } from './components/FoodScreen'
+import { FoodDetailPage } from './components/FoodDetailPage'
 import { CleaningScreen } from './components/CleaningScreen'
 import { ExchangeScreen } from './components/ExchangeScreen'
 import { ProfileScreen } from './components/ProfileScreen'
@@ -60,6 +61,8 @@ function App() {
                 <Route path="/onboarding" element={<OnboardingScreen />} />
                 <Route path="/home" element={<HomeScreen />} />
                 <Route path="/food" element={<FoodScreen />} />
+                <Route path="/food/card/:query" element={<FoodDetailPage />} />
+                <Route path="/food/:id" element={<FoodDetailPage />} />
                 <Route path="/clean" element={<CleaningScreen />} />
                 <Route path="/items" element={<ExchangeScreen />} />
                 <Route path="/profile" element={<ProfileScreen />} />
