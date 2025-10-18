@@ -8,10 +8,11 @@ export default defineConfig({
     host: '0.0.0.0', // Listen on all network interfaces
     port: 5173,
     strictPort: false,
-    allowedHosts: true, // Disable host check completely
-    hmr: {
-      clientPort: 443, // Use HTTPS port for ngrok
-    },
+    // HMR configuration - use default for local dev
+    // For ngrok/tunneling, set clientPort to 443
+    hmr: process.env.USE_NGROK 
+      ? { clientPort: 443 }
+      : true,
   },
   preview: {
     host: '0.0.0.0',

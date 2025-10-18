@@ -244,3 +244,73 @@ export const remove = mutation({
   },
 });
 
+// Bulk upload food items from data.json
+export const seedFoodMenu = mutation({
+  args: {
+    foods: v.array(
+      v.object({
+        id: v.string(),
+        house: v.string(),
+        block: v.string(),
+        dish: v.string(),
+        tags: v.array(v.string()),
+        diet: v.array(v.string()),
+        allergens: v.array(v.string()),
+        price: v.string(),
+        eta: v.optional(v.string()),
+        image: v.optional(v.string()),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const results = {
+      success: 0,
+      failed: 0,
+      skipped: 0,
+      errors: [] as string[],
+    };
+
+    for (const food of args.foods) {
+      try {
+        // Check if already exists
+        const existing = await ctx.db
+          .query("foodMenu")
+          .withIndex("by_item_id", (q) => q.eq("itemId", food.id))
+          .first();
+
+        if (!existing) {
+          await ctx.db.insert("foodMenu", {
+            itemId: food.id,
+            house: food.house,
+            block: food.block,
+            dish: food.dish,
+            description: `Delicious ${food.dish} from ${food.house}`,
+            tags: food.tags,
+            diet: food.diet,
+            allergens: food.allergens,
+            price: food.price,
+            eta: food.eta || "30 min",
+            distance: "0.5 km",
+            rating: 5.0,
+            calories: "500 cal",
+            protein: "20g protein",
+            image: food.image,
+            available: true,
+          });
+          results.success++;
+          console.log(`✅ Added: ${food.id} - ${food.dish}`);
+        } else {
+          results.skipped++;
+          console.log(`⏭️ Skipped (exists): ${food.id}`);
+        }
+      } catch (error: any) {
+        results.failed++;
+        results.errors.push(`${food.id}: ${error.message}`);
+        console.error(`❌ Error: ${food.id}:`, error);
+      }
+    }
+
+    return results;
+  },
+});
+

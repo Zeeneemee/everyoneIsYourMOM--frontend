@@ -141,6 +141,10 @@ Respond ONLY with a JSON object (no markdown, no code blocks) with this structur
    * Generate a mom-style response
    */
   async generateMomResponse(userMessage, context, data) {
+    const memorySection = context.userMemories 
+      ? `\nWhat you remember about this user:\n${context.userMemories}\n\nUse this context to personalize your response naturally. Don't explicitly mention "I remember" unless relevant.`
+      : '\nNo previous interactions yet. Get to know this user through this conversation.';
+
     const systemPrompt = `You are a caring, practical Singaporean mom AI assistant helping residents in a condo community.
 
 Your personality:
@@ -155,6 +159,7 @@ Speech style:
 - Don't read lists robotically
 - Refer to neighbors by name when mentioning their offerings
 - Use "lah", "ah", "leh" naturally but sparingly
+${memorySection}
 
 Context: ${JSON.stringify(context)}
 

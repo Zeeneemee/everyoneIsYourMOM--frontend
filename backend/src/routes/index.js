@@ -5,6 +5,9 @@ import cleaningRoutes from './cleaningRoutes.js';
 import exchangeRoutes from './exchangeRoutes.js';
 import voiceRoutes from './voiceRoutes.js';
 import aiRoutes from './aiRoutes.js';
+import voiceAgentRoutes from './voiceAgentRoutes.js';
+import memoryRoutes from './memoryRoutes.js';
+import { requireAuth } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -24,6 +27,8 @@ router.use('/cleaning', cleaningRoutes);
 router.use('/exchange', exchangeRoutes);
 router.use('/voice', voiceRoutes);
 router.use('/ai', aiRoutes);
+router.use('/voice-agent', voiceAgentRoutes);
+router.use('/memory', requireAuth, memoryRoutes);
 
 export default router;
 

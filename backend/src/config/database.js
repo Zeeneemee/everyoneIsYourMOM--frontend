@@ -26,6 +26,11 @@ export const config = {
     voiceId: process.env.ELEVENLABS_VOICE_ID,
   },
   
+  mem0: {
+    apiKey: process.env.MEM0_API_KEY,
+    userIdPrefix: process.env.MEM0_USER_ID_PREFIX || 'mom_user_',
+  },
+  
   cors: {
     origins: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5173'],
   },
@@ -56,6 +61,9 @@ export const validateConfig = () => {
   }
   if (!process.env.OPENAI_API_KEY) {
     console.warn('⚠️  OPENAI_API_KEY not set. Speech-to-text will be disabled.');
+  }
+  if (!process.env.MEM0_API_KEY) {
+    console.warn('⚠️  MEM0_API_KEY not set. Memory learning features will be disabled.');
   }
 };
 

@@ -11,6 +11,8 @@
 import type * as cleaning from "../cleaning.js";
 import type * as exchange from "../exchange.js";
 import type * as foods from "../foods.js";
+import type * as seed from "../seed.js";
+import type * as uploadData from "../uploadData.js";
 import type * as users from "../users.js";
 
 import type {
@@ -31,6 +33,8 @@ declare const fullApi: ApiFromModules<{
   cleaning: typeof cleaning;
   exchange: typeof exchange;
   foods: typeof foods;
+  seed: typeof seed;
+  uploadData: typeof uploadData;
   users: typeof users;
 }>;
 declare const fullApiWithMounts: typeof fullApi;

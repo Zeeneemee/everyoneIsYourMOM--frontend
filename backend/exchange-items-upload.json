@@ -1,0 +1,88 @@
+{
+  "exchangeItems": [
+    {
+      "id": "item_01",
+      "ownerBlock": "Blk A-304",
+      "item": "Rice Cooker 1.2L",
+      "status": "donate",
+      "condition": "good",
+      "image": "https://u-static.haozhaopian.net/uid_bd4ecb637330442bb02a7cc0ea3eb27a/texttoimage/rice_cooker.jpg"
+    },
+    {
+      "id": "item_02",
+      "ownerBlock": "Blk B-107",
+      "item": "Standing Fan",
+      "status": "exchange",
+      "condition": "fair",
+      "image": "https://u-static.haozhaopian.net/uid_bd4ecb637330442bb02a7cc0ea3eb27a/texttoimage/standing_fan.jpg"
+    },
+    {
+      "id": "item_03",
+      "ownerBlock": "Blk C-502",
+      "item": "Yoga Mat",
+      "status": "donate",
+      "condition": "like new",
+      "image": "https://u-static.haozhaopian.net/uid_bd4ecb637330442bb02a7cc0ea3eb27a/texttoimage/yoga_mat.jpg"
+    },
+    {
+      "id": "item_04",
+      "ownerBlock": "Blk D-406",
+      "item": "Microwave Oven",
+      "status": "sell",
+      "price": "$40",
+      "condition": "good",
+      "image": "https://u-static.haozhaopian.net/uid_bd4ecb637330442bb02a7cc0ea3eb27a/texttoimage/microwave.jpg"
+    },
+    {
+      "id": "item_05",
+      "ownerBlock": "Blk E-208",
+      "item": "Mini Fridge",
+      "status": "exchange",
+      "condition": "good",
+      "image": "https://u-static.haozhaopian.net/uid_bd4ecb637330442bb02a7cc0ea3eb27a/texttoimage/mini_fridge.jpg"
+    },
+    {
+      "id": "item_06",
+      "ownerBlock": "Blk F-105",
+      "item": "Bookshelf (3-tier)",
+      "status": "donate",
+      "condition": "fair",
+      "image": "https://u-static.haozhaopian.net/uid_bd4ecb637330442bb02a7cc0ea3eb27a/texttoimage/bookshelf.jpg"
+    },
+    {
+      "id": "item_07",
+      "ownerBlock": "Blk G-402",
+      "item": "Electric Kettle",
+      "status": "sell",
+      "price": "$10",
+      "condition": "good",
+      "image": "https://u-static.haozhaopian.net/uid_bd4ecb637330442bb02a7cc0ea3eb27a/texttoimage/kettle.jpg"
+    },
+    {
+      "id": "item_08",
+      "ownerBlock": "Blk H-603",
+      "item": "Desk Lamp",
+      "status": "donate",
+      "condition": "good",
+      "image": "https://u-static.haozhaopian.net/uid_bd4ecb637330442bb02a7cc0ea3eb27a/texttoimage/desk_lamp.jpg"
+    },
+    {
+      "id": "item_09",
+      "ownerBlock": "Blk I-310",
+      "item": "Blender",
+      "status": "exchange",
+      "condition": "good",
+      "image": "https://u-static.haozhaopian.net/uid_bd4ecb637330442bb02a7cc0ea3eb27a/texttoimage/blender.jpg"
+    },
+    {
+      "id": "item_10",
+      "ownerBlock": "Blk J-507",
+      "item": "Foldable Chair",
+      "status": "sell",
+      "price": "$15",
+      "condition": "good",
+      "image": "https://u-static.haozhaopian.net/uid_bd4ecb637330442bb02a7cc0ea3eb27a/texttoimage/chair.jpg"
+    }
+  ]
+}
+

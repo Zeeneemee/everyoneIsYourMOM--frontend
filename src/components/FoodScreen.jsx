@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useVoiceAssistant } from "../contexts/VoiceAssistantContext";
 import { useConvexQuery, useConvexMutation } from "../hooks/useConvexQuery";
 import { AIMomAvatar } from "./AIMomAvatar";
 import { BottomNav } from "./BottomNav";
@@ -11,11 +12,12 @@ import { Badge } from "./ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
-import { ArrowLeft, Search, Star, Clock, MapPin, Heart, MessageCircle, ChefHat, Home, Sparkles, Package, Flame, Beef, Plus, Loader2, Settings } from "lucide-react";
+import { ArrowLeft, Search, Star, Clock, MapPin, Heart, MessageCircle, ChefHat, Home, Sparkles, Package, Flame, Beef, Plus, Loader2, Mic } from "lucide-react";
 
 export function FoodScreen() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
+  const { openVoiceAssistant } = useVoiceAssistant();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
@@ -44,6 +46,11 @@ export function FoodScreen() {
     setCurrentPage(1);
   }, [activeFilter]);
 
+  // Auto scroll to top when page changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage]);
+
   const filters = [
     { name: "All", emoji: "🍽️", key: "all" },
     { name: "Italian", emoji: "🍝", key: "italian" },
@@ -71,7 +78,7 @@ export function FoodScreen() {
     calories: food.calories || "500 cal",
     protein: food.protein || "20g protein",
     momMessage: food.description || `${food.house} always cook nice one! You try lah.`,
-    image: food.image || "🍽️"
+    image: food.image ? food.image.replace(/['"]/g, '') : null
   });
 
   // Use Convex data if available, otherwise show loading/empty state
@@ -307,10 +314,11 @@ export function FoodScreen() {
             </DialogContent>
           </Dialog>
           <button
-            onClick={() => navigate('/settings')}
-            className="text-white hover:text-[#FF6B35] transition-colors"
+            onClick={openVoiceAssistant}
+            className="text-white hover:text-[#FF6B35] transition-colors p-2 hover:bg-white/10 rounded-lg"
+            title="Voice Assistant"
           >
-            <Settings className="w-6 h-6" />
+            <Mic className="w-6 h-6" />
           </button>
           </div>
         </div>
@@ -443,7 +451,20 @@ export function FoodScreen() {
               >
                 {/* Food Image with overlay */}
                 <div className="relative h-56 sm:h-64 bg-gradient-to-br from-[#2D2D2D] to-[#1A1A1A] flex items-center justify-center overflow-hidden">
-                  <div className="text-9xl opacity-40">{food.image}</div>
+                  {food.image ? (
+                    <img 
+                      src={food.image} 
+                      alt={food.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.style.display = 'none';
+                        e.target.parentElement.innerHTML += '<div class="text-9xl opacity-40">🍽️</div>';
+                      }}
+                    />
+                  ) : (
+                    <div className="text-9xl opacity-40">🍽️</div>
+                  )}
                   
                   {/* Top overlay badges */}
                   <div className="absolute top-4 left-4 flex gap-2">

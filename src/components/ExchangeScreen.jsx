@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useVoiceAssistant } from "../contexts/VoiceAssistantContext";
 import { useConvexQuery, useConvexMutation } from "../hooks/useConvexQuery";
 import { AIMomAvatar } from "./AIMomAvatar";
 import { BottomNav } from "./BottomNav";
@@ -11,11 +12,12 @@ import { Badge } from "./ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
-import { ArrowLeft, Search, Heart, MessageCircle, MapPin, Clock, ChefHat, Home, Sparkles, Package, Plus, Loader2, Settings } from "lucide-react";
+import { ArrowLeft, Search, Heart, MessageCircle, MapPin, Clock, ChefHat, Home, Sparkles, Package, Plus, Loader2, Mic } from "lucide-react";
 
 export function ExchangeScreen() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
+  const { openVoiceAssistant } = useVoiceAssistant();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -44,6 +46,11 @@ export function ExchangeScreen() {
   useEffect(() => {
     setCurrentPage(1);
   }, [activeFilter]);
+
+  // Auto scroll to top when page changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage]);
 
   // Transform Convex data to match expected format
   const transformItemData = (item) => ({
@@ -135,12 +142,15 @@ export function ExchangeScreen() {
               <h2 className="text-white text-lg font-semibold">Exchange</h2>
             </div>
           </div>
-          <button
-            onClick={() => navigate('/settings')}
-            className="text-white hover:text-[#FF6B35] transition-colors"
-          >
-            <Settings className="w-6 h-6" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={openVoiceAssistant}
+              className="text-white hover:text-[#FF6B35] transition-colors p-2 hover:bg-white/10 rounded-lg"
+              title="Voice Assistant"
+            >
+              <Mic className="w-6 h-6" />
+            </button>
+          </div>
         </div>
       </div>
 

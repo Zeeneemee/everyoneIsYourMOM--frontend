@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { AuthProvider } from './contexts/AuthContext'
+import { VoiceAssistantProvider } from './contexts/VoiceAssistantContext'
+import { VoiceAssistantModal } from './components/VoiceAssistantModal'
 import { SplashScreen } from './components/SplashScreen'
 import { HomeScreen } from './components/HomeScreen'
 import { FoodScreen } from './components/FoodScreen'
@@ -45,25 +47,30 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <div className="w-full min-h-screen bg-[#0F0F0F] overflow-hidden">
-          <div className="max-w-md mx-auto min-h-screen relative bg-[#0F0F0F] shadow-2xl">
-            <Routes>
-              <Route path="/" element={<SplashScreen />} />
-              <Route path="/login" element={<LoginScreen />} />
-              <Route path="/register" element={<RegisterScreen />} />
-              <Route path="/home" element={<HomeScreen />} />
-              <Route path="/food" element={<FoodScreen />} />
-              <Route path="/clean" element={<CleaningScreen />} />
-              <Route path="/items" element={<ExchangeScreen />} />
-              <Route path="/profile" element={<ProfileScreen />} />
-              <Route path="/settings" element={<SettingsScreen />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+        <VoiceAssistantProvider>
+          <div className="w-full min-h-screen bg-[#0F0F0F] overflow-hidden">
+            <div className="max-w-md mx-auto min-h-screen relative bg-[#0F0F0F] shadow-2xl">
+              <Routes>
+                <Route path="/" element={<SplashScreen />} />
+                <Route path="/login" element={<LoginScreen />} />
+                <Route path="/register" element={<RegisterScreen />} />
+                <Route path="/home" element={<HomeScreen />} />
+                <Route path="/food" element={<FoodScreen />} />
+                <Route path="/clean" element={<CleaningScreen />} />
+                <Route path="/items" element={<ExchangeScreen />} />
+                <Route path="/profile" element={<ProfileScreen />} />
+                <Route path="/settings" element={<SettingsScreen />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
 
-            {/* Device Frame Decoration */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-black rounded-b-2xl z-50 hidden sm:block" />
+              {/* Device Frame Decoration */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-black rounded-b-2xl z-50 hidden sm:block" />
+            </div>
           </div>
-        </div>
+
+          {/* Voice Assistant Modal */}
+          <VoiceAssistantModal />
+        </VoiceAssistantProvider>
       </AuthProvider>
     </Router>
   )

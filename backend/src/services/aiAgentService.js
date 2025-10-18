@@ -3,6 +3,7 @@ import { foodModel } from '../models/foodModel.js';
 import { cleaningModel } from '../models/cleaningModel.js';
 import { exchangeModel } from '../models/exchangeModel.js';
 import { userModel } from '../models/userModel.js';
+import { mem0Service } from './mem0Service.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -22,7 +23,7 @@ export class AIAgentService {
 
   loadPersonaData() {
     try {
-      const dataPath = path.join(__dirname, '../../../data.json');
+      const dataPath = path.join(__dirname, '../../../public/data.json');
       const rawData = fs.readFileSync(dataPath, 'utf8');
       this.personaData = JSON.parse(rawData);
     } catch (error) {
@@ -39,9 +40,14 @@ export class AIAgentService {
       // Get user preferences
       const userPrefs = await userModel.getPreferences(userId);
       
+      // Retrieve relevant memories from Mem0
+      const memories = await mem0Service.retrieveMemories(userId, userMessage, 5);
+      const memoryContext = memories.map(m => m.memory || m.text || JSON.stringify(m)).join('\n');
+      
       // Analyze intent
       const intent = await geminiService.analyzeIntent(userMessage, {
         userPreferences: userPrefs,
+        userMemories: memoryContext,
         ...context,
       });
 
@@ -61,22 +67,22 @@ export class AIAgentService {
       switch (intent.intent) {
         case 'food':
           data = await this.handleFoodIntent(intent, userPrefs);
-          response = await this.generateFoodResponse(userMessage, intent, data);
+          response = await this.generateFoodResponse(userMessage, intent, data, memoryContext);
           break;
 
         case 'cleaning':
           data = await this.handleCleaningIntent(intent, userPrefs);
-          response = await this.generateCleaningResponse(userMessage, intent, data);
+          response = await this.generateCleaningResponse(userMessage, intent, data, memoryContext);
           break;
 
         case 'exchange':
           data = await this.handleExchangeIntent(intent, userPrefs);
-          response = await this.generateExchangeResponse(userMessage, intent, data);
+          response = await this.generateExchangeResponse(userMessage, intent, data, memoryContext);
           break;
 
         case 'general':
         default:
-          response = await this.generateGeneralResponse(userMessage, intent);
+          response = await this.generateGeneralResponse(userMessage, intent, memoryContext);
           break;
       }
 
@@ -88,6 +94,17 @@ export class AIAgentService {
         aiResponse: response.text,
         emotion: intent.emotion,
         successful: true,
+      });
+
+      // Store interaction as memory in Mem0
+      await mem0Service.storeMemory(userId, {
+        user: userMessage,
+        assistant: response.text,
+      }, {
+        intent: intent.intent,
+        emotion: intent.emotion,
+        timestamp: new Date().toISOString(),
+        type: 'text_chat',
       });
 
       return {
@@ -180,7 +197,7 @@ export class AIAgentService {
   /**
    * Generate food response using templates and AI
    */
-  async generateFoodResponse(userMessage, intent, data) {
+  async generateFoodResponse(userMessage, intent, data, memoryContext = '') {
     const { recommendations } = data;
 
     if (recommendations.length === 0) {
@@ -208,6 +225,7 @@ export class AIAgentService {
       intent: 'food',
       topRecommendation: topFood,
       userEmotion: intent.emotion,
+      userMemories: memoryContext,
     };
 
     const aiResponse = await geminiService.generateMomResponse(
@@ -222,7 +240,7 @@ export class AIAgentService {
   /**
    * Generate cleaning response
    */
-  async generateCleaningResponse(userMessage, intent, data) {
+  async generateCleaningResponse(userMessage, intent, data, memoryContext = '') {
     const { recommendations } = data;
 
     if (recommendations.length === 0) {
@@ -247,6 +265,7 @@ export class AIAgentService {
       intent: 'cleaning',
       topRecommendation: topSlot,
       userEmotion: intent.emotion,
+      userMemories: memoryContext,
     };
 
     const aiResponse = await geminiService.generateMomResponse(
@@ -261,7 +280,7 @@ export class AIAgentService {
   /**
    * Generate exchange response
    */
-  async generateExchangeResponse(userMessage, intent, data) {
+  async generateExchangeResponse(userMessage, intent, data, memoryContext = '') {
     const { recommendations, searchTerm } = data;
 
     if (recommendations.length === 0) {
@@ -287,6 +306,7 @@ export class AIAgentService {
       intent: 'exchange',
       topRecommendation: topItem,
       userEmotion: intent.emotion,
+      userMemories: memoryContext,
     };
 
     const aiResponse = await geminiService.generateMomResponse(
@@ -301,10 +321,11 @@ export class AIAgentService {
   /**
    * Generate general response
    */
-  async generateGeneralResponse(userMessage, intent) {
+  async generateGeneralResponse(userMessage, intent, memoryContext = '') {
     const context = {
       intent: 'general',
       userEmotion: intent.emotion,
+      userMemories: memoryContext,
     };
 
     // Check for special cases (homesick, gratitude, etc.)

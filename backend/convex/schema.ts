@@ -59,6 +59,7 @@ export default defineSchema({
   // Cleaning slots
   cleaningSlots: defineTable({
     slotId: v.string(), // Original ID from data.json
+    slot: v.optional(v.string()), // Time slot category (morning, afternoon, evening, night)
     time: v.string(),
     date: v.optional(v.string()),
     availableCleaner: v.string(),

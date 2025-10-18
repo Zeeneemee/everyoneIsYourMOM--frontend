@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useVoiceAssistant } from "../contexts/VoiceAssistantContext";
 import { useConvexQuery, useConvexMutation } from "../hooks/useConvexQuery";
 import { AIMomAvatar } from "./AIMomAvatar";
 import { BottomNav } from "./BottomNav";
@@ -11,11 +12,12 @@ import { Badge } from "./ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
-import { ArrowLeft, Search, Star, MapPin, Calendar, Users, ChefHat, Home, Sparkles, Package, MessageCircle, Clock, Plus, User, Loader2, Settings } from "lucide-react";
+import { ArrowLeft, Search, Star, MapPin, Calendar, Users, ChefHat, Home, Sparkles, Package, MessageCircle, Clock, Plus, User, Loader2, Mic } from "lucide-react";
 
 export function CleaningScreen() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
+  const { openVoiceAssistant } = useVoiceAssistant();
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [isOfferDialogOpen, setIsOfferDialogOpen] = useState(false);
@@ -43,6 +45,11 @@ export function CleaningScreen() {
     setCurrentPage(1);
   }, [selectedFilter]);
 
+  // Auto scroll to top when page changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage]);
+
   // Toggle service type selection
   const toggleServiceType = (type) => {
     setNewOffering(prev => ({
@@ -66,7 +73,7 @@ export function CleaningScreen() {
     availability: slot.time || "Available today",
     services: slot.petFriendly ? ["Regular Cleaning", "Pet-friendly"] : ["Regular Cleaning"],
     highlight: slot.description || `${slot.availableCleaner} is experienced and reliable!`,
-    image: "👨‍🔧",
+    image: slot.image ? slot.image.replace(/['"]/g, '') : null,
     verified: true,
     petFriendly: slot.petFriendly
   });
@@ -271,10 +278,11 @@ export function CleaningScreen() {
               </DialogContent>
             </Dialog>
             <button
-              onClick={() => navigate('/settings')}
-              className="text-white hover:text-[#FF6B35] transition-colors"
+              onClick={openVoiceAssistant}
+              className="text-white hover:text-[#FF6B35] transition-colors p-2 hover:bg-white/10 rounded-lg"
+              title="Voice Assistant"
             >
-              <Settings className="w-6 h-6" />
+              <Mic className="w-6 h-6" />
             </button>
           </div>
         </div>
@@ -428,8 +436,21 @@ export function CleaningScreen() {
               <div className="flex gap-4 mb-4">
                 {/* Profile Picture */}
                 <div className="relative shrink-0">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FFB84D] flex items-center justify-center text-3xl">
-                    {service.image}
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FFB84D] flex items-center justify-center text-3xl overflow-hidden">
+                    {service.image ? (
+                      <img 
+                        src={service.image} 
+                        alt={service.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.style.display = 'none';
+                          e.target.parentElement.innerHTML = '👨‍🔧';
+                        }}
+                      />
+                    ) : (
+                      <span className="text-3xl">👨‍🔧</span>
+                    )}
                   </div>
                   {service.verified && (
                     <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center border-2 border-[#1A1A1A]">
