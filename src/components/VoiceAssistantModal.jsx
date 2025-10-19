@@ -20,6 +20,72 @@ export function VoiceAssistantModal() {
     const textLower = messageText.toLowerCase();
     console.log("🎯 Parsing selection from:", textLower);
     
+    // PRIORITY 0: Check for "I want [foodName]" pattern FIRST
+    if (textLower.includes('i want') || textLower.includes('want the') || textLower.includes('i\'ll take') || textLower.includes('give me')) {
+      console.log("🎯 Detected 'I want' pattern, checking for food name match...");
+      
+      // Extract the food name after "want" - clean and normalize
+      let afterWant = textLower;
+      
+      // Remove trigger phrases to get the food name
+      afterWant = afterWant.replace(/^.*?(i want|want the|i'll take|give me|show me the?)\s*/i, '');
+      
+      // Clean up common endings and punctuation
+      afterWant = afterWant
+        .replace(/\s*(please|pls|thanks|thank you).*$/i, '')
+        .replace(/[,.!?;].*$/, '')
+        .trim();
+      
+      if (afterWant && recommendations.length > 0) {
+        console.log("✨ Cleaned extracted text:", `"${afterWant}"`);
+        
+        // Try to match with food names in recommendations
+        for (let i = 0; i < recommendations.length; i++) {
+          const food = recommendations[i];
+          const foodName = (food.name || food.dish || '').toLowerCase().trim();
+          
+          console.log(`Comparing with "${foodName}"`);
+          
+          // Check for exact match
+          if (foodName === afterWant) {
+            console.log(`✅ Found EXACT match: "${foodName}" at index ${i}`);
+            return { type: 'index', value: i };
+          }
+          
+          // Check if extracted text contains full food name
+          if (afterWant.includes(foodName)) {
+            console.log(`✅ Found full name in text: "${foodName}" at index ${i}`);
+            return { type: 'index', value: i };
+          }
+          
+          // Check if food name contains extracted text (for shortened names)
+          if (foodName.includes(afterWant) && afterWant.length > 3) {
+            console.log(`✅ Found food containing text: "${foodName}" at index ${i}`);
+            return { type: 'index', value: i };
+          }
+          
+          // Check for partial word matches (at least 2 significant words)
+          const afterWantWords = afterWant.split(/\s+/).filter(w => w.length > 2);
+          const foodWords = foodName.split(/\s+/).filter(w => w.length > 2);
+          
+          let matchCount = 0;
+          for (const word of afterWantWords) {
+            if (foodWords.some(fw => fw.includes(word) || word.includes(fw))) {
+              matchCount++;
+            }
+          }
+          
+          // If at least 2 words match OR majority of words match
+          if (matchCount >= 2 || (afterWantWords.length > 0 && matchCount >= Math.ceil(afterWantWords.length * 0.6))) {
+            console.log(`✅ Found word match: "${foodName}" at index ${i} (${matchCount} words matched)`);
+            return { type: 'index', value: i };
+          }
+        }
+        
+        console.log("❌ No matching food found for:", afterWant);
+      }
+    }
+    
     // Check if this is a selection command
     const selectionKeywords = ['choose', 'select', 'want', 'pick', 'take', 'go with', 'book', 'order', 'get', 'i\'ll', 'give me', 'show me'];
     const hasSelectionKeyword = selectionKeywords.some(keyword => textLower.includes(keyword));
